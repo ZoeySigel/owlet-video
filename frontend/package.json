@@ -10,7 +10,6 @@
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.8",
     "@fontsource/manrope": "^5.2.8",
-    "@fontsource/newsreader": "^5.2.8",
     "next": "16.3.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
