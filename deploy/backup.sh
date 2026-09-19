@@ -15,7 +15,7 @@ mkdir -p "$base"
 tmp="$base/.${stamp}.tmp"
 mkdir -p "$tmp/media"
 trap 'rm -rf -- "$tmp"' EXIT
-mysqldump --defaults-extra-file=/etc/owlet-video/mysql-backup.cnf --single-transaction --set-gtid-purged=OFF owlet_video | gzip -9 > "$tmp/mysql.sql.gz"
+mysqldump --defaults-extra-file=/etc/owlet-video/mysql-backup.cnf --single-transaction --no-tablespaces --set-gtid-purged=OFF owlet_video | gzip -9 > "$tmp/mysql.sql.gz"
 previous=$(find "$base" -mindepth 1 -maxdepth 1 -type d -name '20*' | sort | tail -n 1 || true)
 if [[ -n "$previous" ]]; then
   rsync -a --link-dest="$previous/media" /var/lib/owlet-video/media/ "$tmp/media/"
