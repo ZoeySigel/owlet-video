@@ -39,6 +39,12 @@ jobs:
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
+          for name in DEPLOY_KEY DEPLOY_KEY_PASSPHRASE DEPLOY_KNOWN_HOSTS DEPLOY_HOST; do
+            if [ -z "${!name}" ]; then
+              echo "::error title=Missing production secret::Configure $name in the production environment before manual deployment"
+              exit 1
+            fi
+          done
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
