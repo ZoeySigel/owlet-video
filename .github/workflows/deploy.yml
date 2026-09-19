@@ -35,6 +35,7 @@ jobs:
       - name: Deploy via restricted SSH key
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KEY_PASSPHRASE: ${{ secrets.DEPLOY_KEY_PASSPHRASE }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
@@ -43,4 +44,13 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          cat > ~/.ssh/askpass <<'EOF'
+          #!/bin/sh
+          printf '%s' "$DEPLOY_KEY_PASSPHRASE"
+          EOF
+          chmod 700 ~/.ssh/askpass
+          eval "$(ssh-agent -s)"
+          trap 'ssh-agent -k >/dev/null' EXIT
+          DISPLAY=:0 SSH_ASKPASS="$HOME/.ssh/askpass" SSH_ASKPASS_REQUIRE=force ssh-add ~/.ssh/id_ed25519 </dev/null
+          unset DEPLOY_KEY_PASSPHRASE
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes owlet-video-ci@"$DEPLOY_HOST" "deploy $GITHUB_SHA" < release.tar.gz

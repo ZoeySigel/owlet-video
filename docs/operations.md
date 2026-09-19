@@ -4,7 +4,7 @@
 
 目标服务器：Ubuntu 24.04、`owl-et.me`、约 1.6 GiB 内存。新项目独立使用 `owlet-video` 服务账号、`owlet-video-ci` 受限部署账号、`owlet_video` MySQL 数据库/角色。保留旧 Owlet 本地源码与加密备份。
 
-1. 在本地生成**新的** CI Ed25519 密钥；私钥只写入新仓库 `production` Environment 的 `DEPLOY_KEY` Secret。
+1. 在本地生成**新的**带口令 CI Ed25519 密钥；私钥和口令分别写入新仓库 `production` Environment 的 `DEPLOY_KEY` 与 `DEPLOY_KEY_PASSPHRASE` Secret。工作流通过临时 ssh-agent 解锁。
 2. 将公钥和本仓库 `deploy/` 文件传到服务器临时目录，以管理账号运行 `sudo bash deploy/provision.sh REPO_DIR CI_PUBLIC_KEY_FILE`。脚本生成服务器本地数据库、Redis、RabbitMQ、JWT 密钥，保存在 `/etc/owlet-video/app.env`，不复制进 GitHub。
 3. 在 GitHub `production` Environment 新增 `DEPLOY_HOST=47.80.1.122` 和固定的 `DEPLOY_KNOWN_HOSTS`。主机记录使用交接文件已验证的 `known_hosts`。
 4. 从 Actions 手动运行 **Deploy production**。工作流先执行自动测试，再将版本化产物发送到受限 SSH 入口。入口校验归档、切换 `current` 链接、重启 API/Worker，并在健康检查失败时回滚。

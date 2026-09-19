@@ -53,7 +53,7 @@ func declareBroker(ch *amqp.Channel) error {
 	if _, err := ch.QueueDeclare("owlet.dead", true, false, false, false, nil); err != nil {
 		return err
 	}
-	return ch.QueueBind("owlet.dead", "dead", "owlet.dlx", false, nil)
+	return ch.QueueBind("owlet.dead", "events", "owlet.dlx", false, nil)
 }
 
 func (a *App) runWorker(ctx context.Context) error {
