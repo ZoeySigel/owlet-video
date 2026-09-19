@@ -45,7 +45,17 @@ def main():
     RELEASES.mkdir(parents=True, exist_ok=True)
     target = RELEASES / revision
     if target.exists():
-        raise ValueError('release already exists')
+        if not CURRENT.is_symlink() or CURRENT.resolve() != target:
+            raise ValueError('release already exists but is not current')
+        total = 0
+        while chunk := sys.stdin.buffer.read(1024 * 1024):
+            total += len(chunk)
+            if total > MAX_ARCHIVE:
+                raise ValueError('archive too large')
+        if not healthy():
+            raise RuntimeError('current release is unhealthy')
+        print(f'already deployed {revision}')
+        return
     with tempfile.NamedTemporaryFile(dir=BASE, prefix='.incoming-', delete=False) as stream:
         archive = pathlib.Path(stream.name)
         total = 0
