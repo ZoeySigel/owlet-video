@@ -1,0 +1,25 @@
+[Unit]
+Description=Owlet Video Worker
+After=network-online.target mysql.service redis-server.service rabbitmq-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=owlet-video
+Group=owlet-video
+EnvironmentFile=/etc/owlet-video/app.env
+WorkingDirectory=/srv/owlet-video/current
+ExecStart=/srv/owlet-video/current/bin/owlet-video worker
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/owlet-video
+MemoryMax=192M
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=200
+
+[Install]
+WantedBy=multi-user.target

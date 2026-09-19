@@ -1,0 +1,77 @@
+name: owlet-video
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: owlet_video
+      MYSQL_USER: owlet_video
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-local-app-password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-root-password}
+    command: ["--innodb-buffer-pool-size=128M", "--max-connections=40"]
+    volumes: ["mysql_data:/var/lib/mysql"]
+    ports: ["127.0.0.1:13306:3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    command: ["sh", "-c", "redis-server --requirepass \"$${REDIS_PASSWORD}\" --maxmemory 128mb --maxmemory-policy allkeys-lru"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-local-redis-password}
+    volumes: ["redis_data:/data"]
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-owlet}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-local-rabbit-password}
+    ports: ["127.0.0.1:5672:5672", "127.0.0.1:15672:15672"]
+    volumes: ["rabbit_data:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  api:
+    build: ./backend
+    command: ["api"]
+    environment: &app-env
+      ADDR: 0.0.0.0:8080
+      MYSQL_DSN: owlet_video:${MYSQL_PASSWORD:-local-app-password}@tcp(mysql:3306)/owlet_video?charset=utf8mb4&parseTime=True&loc=UTC
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-local-redis-password}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-owlet}:${RABBITMQ_PASSWORD:-local-rabbit-password}@rabbitmq:5672/
+      JWT_SECRET: ${JWT_SECRET:-replace-this-with-at-least-32-random-characters}
+      PUBLIC_URL: http://localhost:3000
+      DATA_DIR: /var/lib/owlet-video
+      SECURE_COOKIES: "false"
+    volumes: ["./data:/var/lib/owlet-video"]
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+  worker:
+    build: ./backend
+    command: ["worker"]
+    environment: *app-env
+    volumes: ["./data:/var/lib/owlet-video"]
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+  web:
+    build: ./frontend
+    ports: ["127.0.0.1:3000:80"]
+    volumes: ["./data/media:/var/lib/owlet-video/media:ro"]
+    depends_on: [api]
+volumes:
+  mysql_data:
+  redis_data:
+  rabbit_data:

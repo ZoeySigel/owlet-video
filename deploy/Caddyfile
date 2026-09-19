@@ -1,0 +1,19 @@
+owl-et.me {
+    encode zstd gzip
+    @api path /api/* /healthz
+    handle @api {
+        reverse_proxy 127.0.0.1:8080 {
+            flush_interval -1
+        }
+    }
+    handle /media/* {
+        root * /var/lib/owlet-video
+        header X-Content-Type-Options nosniff
+        file_server
+    }
+    handle {
+        root * /srv/owlet-video/current/web
+        try_files {path} /index.html
+        file_server
+    }
+}

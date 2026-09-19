@@ -1,0 +1,26 @@
+{
+  "name": "owlet-video-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.8",
+    "@fontsource/manrope": "^5.2.8",
+    "@fontsource/newsreader": "^5.2.8",
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "spark-md5": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/spark-md5": "^3.0.5",
+    "typescript": "^5.8.3"
+  }
+}

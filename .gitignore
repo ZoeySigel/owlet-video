@@ -1,0 +1,14 @@
+.env
+*.local
+data/
+backend/data/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/tsconfig.tsbuildinfo
+*.exe
+*.test
+__pycache__/
+*.pyc
+.tools/
+deploy/*.key

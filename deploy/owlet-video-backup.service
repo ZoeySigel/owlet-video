@@ -1,0 +1,7 @@
+[Unit]
+Description=Owlet Video local backup
+After=mysql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/owlet-video-backup

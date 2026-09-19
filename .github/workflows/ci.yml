@@ -1,0 +1,65 @@
+name: Test
+on:
+  workflow_call:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: owlet_video_test
+          MYSQL_USER: owlet_test
+          MYSQL_PASSWORD: test-password
+          MYSQL_ROOT_PASSWORD: test-root-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest-root-password --silent"
+          --health-interval=5s --health-timeout=3s --health-retries=30
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd="redis-cli ping | grep PONG"
+          --health-interval=5s --health-timeout=3s --health-retries=20
+      rabbitmq:
+        image: rabbitmq:4.1-management-alpine
+        ports: ['5672:5672']
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Vet
+        run: go vet ./...
+      - name: Unit and integration tests with race detector
+        env:
+          TEST_MYSQL_DSN: owlet_test:test-password@tcp(127.0.0.1:3306)/owlet_video_test?parseTime=True&charset=utf8mb4&loc=UTC
+          TEST_REDIS_ADDR: 127.0.0.1:6379
+          TEST_RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672/
+        run: go test -race -count=1 ./...
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
