@@ -62,7 +62,10 @@ func main() {
 		fmt.Printf("One-time invite (expires %s): %s\n", invite.ExpiresAt.Format(time.RFC3339), code)
 	case "cleanup":
 		if err:=app.cleanupUploads();err!=nil{log.Fatal(err)}
-	default: log.Fatal("mode must be api, worker, or invite")
+	case "seed":
+		if os.Getenv("SEED_TEST_DATA") != "1" { log.Fatal("seed requires SEED_TEST_DATA=1") }
+		if err:=app.seedTestData(os.Args[2:]);err!=nil{log.Fatal(err)}
+	default: log.Fatal("mode must be api, worker, invite, cleanup, or seed")
 	}
 }
 
