@@ -1,6 +1,6 @@
 owl-et.me {
     encode zstd gzip
-    @api path /api/* /healthz
+    @api path /api/* /healthz /livez
     handle @api {
         reverse_proxy 127.0.0.1:8080 {
             flush_interval -1

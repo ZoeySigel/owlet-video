@@ -1,0 +1,35 @@
+name: owlet-validation
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: owlet_video_test
+      MYSQL_USER: owlet_test
+      MYSQL_PASSWORD: test-password
+      MYSQL_ROOT_PASSWORD: test-root-password
+    ports: ["127.0.0.1:23306:3306"]
+    tmpfs: ["/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -ptest-root-password --silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:26379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: owlet_test
+      RABBITMQ_DEFAULT_PASS: test-password
+    ports: ["127.0.0.1:25672:5672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30

@@ -52,6 +52,12 @@ services:
       PUBLIC_URL: http://localhost:3000
       DATA_DIR: /var/lib/owlet-video
       SECURE_COOKIES: "false"
+      HOT_WINDOW: ${HOT_WINDOW:-24h}
+      RANK_REFRESH: ${RANK_REFRESH:-1m}
+      FEED_SNAPSHOT_TTL: ${FEED_SNAPSHOT_TTL:-15m}
+      FEED_RANK_LIMIT: ${FEED_RANK_LIMIT:-2000}
+      REDIS_TIMEOUT: ${REDIS_TIMEOUT:-200ms}
+      DB_TIMEOUT: ${DB_TIMEOUT:-3s}
     volumes: ["./data:/var/lib/owlet-video"]
     depends_on:
       mysql: { condition: service_healthy }

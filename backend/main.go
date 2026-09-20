@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -23,65 +24,100 @@ import (
 )
 
 type App struct {
-	cfg Config
-	db *gorm.DB
-	redis *redis.Client
+	cfg         Config
+	db          *gorm.DB
+	redis       *redis.Client
+	runtimeOnce sync.Once
+	runtime     *appRuntime
 }
 
 func main() {
-	cfg := configFromEnv()
+	cfg := configFromEnv().defaults()
 	if len(cfg.JWTSecret) < 32 || cfg.MySQLDSN == "" || cfg.RabbitURL == "" {
 		log.Fatal("JWT_SECRET (32+ chars), MYSQL_DSN and RABBITMQ_URL are required")
 	}
-	if err := os.MkdirAll(filepath.Join(cfg.DataDir, "tmp"), 0700); err != nil { log.Fatal(err) }
-	if err := os.MkdirAll(filepath.Join(cfg.DataDir, "media"), 0750); err != nil { log.Fatal(err) }
+	if err := os.MkdirAll(filepath.Join(cfg.DataDir, "tmp"), 0700); err != nil {
+		log.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(cfg.DataDir, "media"), 0750); err != nil {
+		log.Fatal(err)
+	}
 	db, err := gorm.Open(mysql.Open(cfg.MySQLDSN), &gorm.Config{TranslateError: true})
-	if err != nil { log.Fatal(err) }
-	if err := db.AutoMigrate(&User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}); err != nil { log.Fatal(err) }
-	sqlDB, err := db.DB(); if err != nil { log.Fatal(err) }
-	sqlDB.SetMaxOpenConns(16); sqlDB.SetMaxIdleConns(4); sqlDB.SetConnMaxLifetime(30*time.Minute)
-	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr, Password: cfg.RedisPassword, PoolSize: 8})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := db.AutoMigrate(&User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
+		log.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	sqlDB.SetMaxOpenConns(16)
+	sqlDB.SetMaxIdleConns(4)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr, Password: cfg.RedisPassword, PoolSize: 8, DialTimeout: cfg.RedisTimeout, ReadTimeout: cfg.RedisTimeout, WriteTimeout: cfg.RedisTimeout, PoolTimeout: cfg.RedisTimeout, MaxRetries: -1, ContextTimeoutEnabled: true})
 	app := &App{cfg: cfg, db: db, redis: rdb}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	defer sqlDB.Close()
 	defer rdb.Close()
-	mode := "api"; if len(os.Args) > 1 { mode = os.Args[1] }
+	mode := "api"
+	if len(os.Args) > 1 {
+		mode = os.Args[1]
+	}
 	switch mode {
 	case "api":
-		server := &http.Server{Addr: cfg.Addr, Handler: app.router(), ReadHeaderTimeout: 10*time.Second, IdleTimeout: 60*time.Second}
-		go func(){ <-ctx.Done(); c, cancel := context.WithTimeout(context.Background(), 12*time.Second); defer cancel(); _ = server.Shutdown(c) }()
+		server := &http.Server{Addr: cfg.Addr, Handler: app.router(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
+		go func() {
+			<-ctx.Done()
+			c, cancel := context.WithTimeout(context.Background(), 12*time.Second)
+			defer cancel()
+			_ = server.Shutdown(c)
+		}()
 		log.Printf("API listening on %s", cfg.Addr)
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) { log.Fatal(err) }
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
 	case "worker":
-		if err := app.runWorker(ctx); err != nil && ctx.Err() == nil { log.Fatal(err) }
+		if err := app.runWorker(ctx); err != nil && ctx.Err() == nil {
+			log.Fatal(err)
+		}
 	case "invite":
 		code := strings.ReplaceAll(uuid.NewString(), "-", "")
-		invite := Invite{CodeHash: shaHex(code), ExpiresAt: time.Now().Add(14*24*time.Hour)}
-		if err := db.Create(&invite).Error; err != nil { log.Fatal(err) }
+		invite := Invite{CodeHash: shaHex(code), ExpiresAt: time.Now().Add(14 * 24 * time.Hour)}
+		if err := db.Create(&invite).Error; err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("One-time invite (expires %s): %s\n", invite.ExpiresAt.Format(time.RFC3339), code)
 	case "cleanup":
-		if err:=app.cleanupUploads();err!=nil{log.Fatal(err)}
+		if err := app.cleanupUploads(); err != nil {
+			log.Fatal(err)
+		}
 	case "seed":
-		if os.Getenv("SEED_TEST_DATA") != "1" { log.Fatal("seed requires SEED_TEST_DATA=1") }
-		if err:=app.seedTestData(os.Args[2:]);err!=nil{log.Fatal(err)}
-	default: log.Fatal("mode must be api, worker, invite, cleanup, or seed")
+		if os.Getenv("SEED_TEST_DATA") != "1" {
+			log.Fatal("seed requires SEED_TEST_DATA=1")
+		}
+		if err := app.seedTestData(os.Args[2:]); err != nil {
+			log.Fatal(err)
+		}
+	default:
+		log.Fatal("mode must be api, worker, invite, cleanup, or seed")
 	}
 }
 
 func shaHex(s string) string { h := sha256.Sum256([]byte(s)); return hex.EncodeToString(h[:]) }
-func errorJSON(c *gin.Context, status int, code string) { c.AbortWithStatusJSON(status, gin.H{"error": code}) }
+func errorJSON(c *gin.Context, status int, code string) {
+	c.AbortWithStatusJSON(status, gin.H{"error": code})
+}
 func currentID(c *gin.Context) uint { return c.MustGet("userID").(uint) }
 
 func (a *App) router() *gin.Engine {
-	r := gin.New(); r.Use(gin.Recovery(), gin.Logger(), a.sameOrigin())
+	r := gin.New()
+	r.Use(gin.Recovery(), gin.Logger(), a.sameOrigin())
 	_ = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
-	r.GET("/healthz", func(c *gin.Context){
-		sqlDB, _ := a.db.DB(); ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second); defer cancel()
-		if sqlDB.PingContext(ctx) != nil { errorJSON(c, 503, "database_unavailable"); return }
-		if a.redis.Ping(ctx).Err() != nil { errorJSON(c, 503, "redis_unavailable"); return }
-		c.JSON(200, gin.H{"status":"ok"})
-	})
+	r.GET("/livez", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
+	r.GET("/healthz", a.health)
 	v := r.Group("/api/v1")
 	v.POST("/auth/register", a.rateLimit("register", 5, time.Hour), a.register)
 	v.POST("/auth/login", a.rateLimit("login", 10, time.Hour), a.login)
@@ -96,7 +132,8 @@ func (a *App) router() *gin.Engine {
 	v.GET("/tags/:tag/videos", a.tagFeed)
 	v.GET("/users/:id/followers", a.followers)
 	v.GET("/users/:id/following", a.following)
-	auth := v.Group(""); auth.Use(a.auth())
+	auth := v.Group("")
+	auth.Use(a.auth())
 	auth.PATCH("/me", a.updateMe)
 	auth.PATCH("/auth/password", a.changePassword)
 	auth.POST("/me/avatar", a.uploadAvatar)

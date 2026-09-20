@@ -393,6 +393,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
   const [cursor, setCursor] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expired, setExpired] = useState(false);
   const active = useRef(true);
   const busy = useRef(false);
   const load = useCallback(
@@ -417,9 +418,14 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
               : r.items || [],
           );
           setCursor(r.nextCursor || "");
+          setExpired(false);
         }
       } catch (e) {
-        if (active.current) setError(errorMessage(e));
+        if (active.current) {
+          setError(errorMessage(e));
+          if (e instanceof Error && e.message === "feed_cursor_expired")
+            setExpired(true);
+        }
       } finally {
         busy.current = false;
         if (active.current) setLoading(false);
@@ -475,7 +481,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
           {error && (
             <ErrorState
               message={error}
-              retry={() => void load(items.length ? cursor : "")}
+              retry={() => void load(expired ? "" : items.length ? cursor : "")}
             />
           )}{" "}
           {loading && !items.length ? (
@@ -491,7 +497,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
                   className="load-more"
                   variant="secondary"
                   disabled={loading}
-                  onClick={() => void load(cursor)}
+                  onClick={() => void load(expired ? "" : cursor)}
                 >
                   {loading ? "正在加载…" : "加载更多"}
                 </Button>

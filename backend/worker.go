@@ -6,14 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand/v2"
+	"net"
 	"regexp"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -56,8 +56,66 @@ func declareBroker(ch *amqp.Channel) error {
 	return ch.QueueBind("owlet.dead", "events", "owlet.dlx", false, nil)
 }
 
+// Run maintenance independently of RabbitMQ; reconnect failed broker sessions
+// with capped exponential backoff instead of relying only on systemd restarts.
 func (a *App) runWorker(ctx context.Context) error {
-	conn, err := amqp.Dial(a.cfg.RabbitURL)
+	work, cancel := context.WithCancel(ctx)
+	defer cancel()
+	maintenanceDone := make(chan struct{})
+	go func() { defer close(maintenanceDone); a.rankMaintenance(work) }()
+	defer func() { cancel(); <-maintenanceDone }()
+	delay := time.Second
+	for work.Err() == nil {
+		started := time.Now()
+		err := a.runBrokerSession(work)
+		if work.Err() != nil {
+			return nil
+		}
+		if err == nil {
+			return nil
+		}
+		if time.Since(started) > time.Minute {
+			delay = time.Second
+		}
+		wait := delay + time.Duration(rand.IntN(250))*time.Millisecond
+		log.Printf("broker session unavailable; retrying in %s", wait)
+		timer := time.NewTimer(wait)
+		select {
+		case <-work.Done():
+			timer.Stop()
+			return nil
+		case <-timer.C:
+		}
+		delay = min(delay*2, 30*time.Second)
+	}
+	return nil
+}
+func dialBroker(ctx context.Context, url string) (*amqp.Connection, error) {
+	var transport net.Conn
+	conn, err := amqp.DialConfig(url, amqp.Config{Heartbeat: 10 * time.Second, Dial: func(network, addr string) (net.Conn, error) {
+		var e error
+		transport, e = (&net.Dialer{Timeout: 3 * time.Second}).DialContext(ctx, network, addr)
+		if e == nil {
+			e = transport.SetDeadline(time.Now().Add(3 * time.Second))
+			if e != nil {
+				transport.Close()
+			}
+		}
+		return transport, e
+	}})
+	if err != nil {
+		if transport != nil {
+			transport.Close()
+		}
+		return nil, err
+	}
+	if transport != nil {
+		_ = transport.SetDeadline(time.Time{})
+	}
+	return conn, nil
+}
+func (a *App) runBrokerSession(ctx context.Context) error {
+	conn, err := dialBroker(ctx, a.cfg.RabbitURL)
 	if err != nil {
 		return err
 	}
@@ -87,10 +145,12 @@ func (a *App) runWorker(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		cancel()
+		_ = conn.Close()
 		wg.Wait()
 		return nil
 	case err := <-errCh:
 		cancel()
+		_ = conn.Close()
 		wg.Wait()
 		return err
 	}
@@ -106,7 +166,7 @@ func (a *App) publishOutbox(ctx context.Context, ch *amqp.Channel, confirm <-cha
 		case <-ticker.C:
 		}
 		var rows []Outbox
-		if err := a.db.Where("published_at IS NULL").Order("created_at ASC").Limit(20).Find(&rows).Error; err != nil {
+		if err := a.db.WithContext(ctx).Where("published_at IS NULL").Order("created_at ASC").Limit(20).Find(&rows).Error; err != nil {
 			return err
 		}
 		for _, row := range rows {
@@ -124,7 +184,7 @@ func (a *App) publishOutbox(ctx context.Context, ch *amqp.Channel, confirm <-cha
 				return errors.New("broker confirm timeout")
 			}
 			now := time.Now()
-			if err := a.db.Model(&Outbox{}).Where("id = ? AND published_at IS NULL", row.ID).Update("published_at", &now).Error; err != nil {
+			if err := a.db.WithContext(ctx).Model(&Outbox{}).Where("id = ? AND published_at IS NULL", row.ID).Update("published_at", &now).Error; err != nil {
 				return err
 			}
 		}
@@ -206,7 +266,7 @@ var mentionPattern = regexp.MustCompile(`@[a-zA-Z0-9_]{3,40}`)
 
 func (a *App) processEvent(ctx context.Context, e event) error {
 	var notifyUsers []uint
-	err := a.db.Transaction(func(tx *gorm.DB) error {
+	err := a.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&ProcessedEvent{ID: e.ID}).Error
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return nil
@@ -256,25 +316,16 @@ func (a *App) processEvent(ctx context.Context, e event) error {
 	if err != nil {
 		return err
 	}
+	// Cache and realtime signals are optional side effects. A Redis outage must
+	// not dead-letter an event whose durable notification already committed.
 	videoID := eventUint(e, "videoId")
 	if videoID > 0 {
-		var v Video
-		if a.db.First(&v, videoID).Error == nil {
-			if err := a.redis.ZAdd(ctx, "feed:hot", redis.Z{Score: v.Popularity, Member: strconv.FormatUint(uint64(v.ID), 10)}).Err(); err != nil {
-				return err
-			}
-			if e.Kind == "video.published" {
-				if err := a.redis.ZAdd(ctx, "feed:latest", redis.Z{Score: float64(v.PublishedAt.Unix()), Member: strconv.FormatUint(uint64(v.ID), 10)}).Err(); err != nil {
-					return err
-				}
-			}
-			a.invalidateVideo(v.ID)
-		}
+		a.invalidateVideo(videoID)
 	}
 	for _, uid := range notifyUsers {
-		if err := a.redis.Publish(ctx, fmt.Sprintf("notifications:%d", uid), e.ID).Err(); err != nil {
-			return err
-		}
+		_ = a.withRedis(ctx, func(ctx context.Context) error {
+			return a.redis.Publish(ctx, fmt.Sprintf("notifications:%d", uid), e.ID).Err()
+		})
 	}
 	return nil
 }

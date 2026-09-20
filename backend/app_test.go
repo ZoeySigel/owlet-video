@@ -60,7 +60,7 @@ func TestIntegrationFlow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
 		t.Fatal(err)
 	}
 	rdb := redis.NewClient(&redis.Options{Addr: env("TEST_REDIS_ADDR", "127.0.0.1:6379"), Password: os.Getenv("TEST_REDIS_PASSWORD")})
@@ -169,7 +169,12 @@ func TestIntegrationFlow(t *testing.T) {
 		if n < 3 {
 			t.Fatalf("expected notifications from worker, got %d", n)
 		}
-		if _, err := rdb.ZScore(context.Background(), "feed:hot", fmt.Sprint(video.ID)).Result(); err != nil {
+		snapshot, err := a.latestRank(context.Background(), "hot")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, rankKey := snapshotKeys(snapshot.ID)
+		if _, err := rdb.ZScore(context.Background(), rankKey, fmt.Sprintf("%020d", video.ID)).Result(); err != nil {
 			t.Fatalf("hot ZSET missing video: %v", err)
 		}
 		var row Outbox

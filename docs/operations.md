@@ -23,3 +23,29 @@ MySQL、Redis、RabbitMQ、Go API/Worker 和 Caddy 同机运行。MySQL buffer p
 恢复时先停止 API/Worker 与 Caddy，确认目标为新项目数据库和媒体目录；从选定快照恢复 MySQL dump 与媒体文件，检查数据库记录数、随机媒体校验及权限，再启动服务。版本回滚只切换 `/srv/owlet-video/current` 到上一版本并重启服务；数据库不兼容变更须先执行对应迁移回退方案。
 
 日志：`journalctl -u owlet-video-api -u owlet-video-worker`。RabbitMQ 死信队列在故障修复后人工审查并重投。
+
+## 排名与容错配置
+
+本轮升级增加 `feed_snapshots` 表及点赞、评论时间索引，由 API/Worker 启动时自动迁移。没有删除列或修改业务主键。正式发布前备份数据库；数据量较大时先在预发布环境评估建索引耗时。旧版热门/点赞分页游标会收到 410，刷新首屏即可继续。
+
+API 与 Worker 必须使用相同的排名配置和签名密钥；生产环境可在 `/etc/owlet-video/app.env` 设置下列变量。缺省值适用于当前规模，Compose 从项目 `.env` 读取相同变量。
+
+| 变量 | 默认值 | 用途 |
+| --- | --- | --- |
+| `HOT_WINDOW` | `24h` | 互动滑动窗口长度 |
+| `RANK_REFRESH` | `1m` | 快照时间段及 Worker 刷新间隔 |
+| `FEED_SNAPSHOT_TTL` | `15m` | 从快照时间段起点计算的保留时间，应大于刷新间隔 |
+| `FEED_RANK_LIMIT` | `2000` | 每个热门/点赞榜单最多条数，允许 20–10000 |
+| `REDIS_TIMEOUT` | `200ms` | Redis 单次调用、连接与等待连接池超时 |
+| `DB_TIMEOUT` | `3s` | 详情回源、排名等读取任务的超时预算，不是所有业务接口的全局超时 |
+
+非法、非正时长和越界榜单条数回退到默认值。快照 TTL 不大于刷新间隔时会调整为 15 分钟或刷新间隔的两倍，取能满足要求的值。调整窗口与刷新间隔会产生新快照，不修改仍在有效期内的已发出游标。
+
+## 故障观察与恢复
+
+- API：`/livez` 检查进程；`/healthz` 的 MySQL 不可用返回 503，Redis 不可用返回 200 / `degraded`。监控既要读取 HTTP 状态也要读取响应体；进程健康不能代替队列健康。Caddy/Nginx 模板已加入 `/livez` 代理，已有生产 Caddy 配置需随运维发布同步。
+- Redis：日志出现 `redis circuit open` 表示进入降级，`redis circuit recovered` 表示恢复。详情响应 `X-Cache: stale` 表示使用旧值。恢复后缓存随请求和 Worker 自动填充，不应通过清空生产 Redis 来执行验收。
+- RabbitMQ：日志出现 `broker session unavailable` 时检查连接、队列和权限。Worker 会自动重连；数据库的 `outboxes.published_at IS NULL` 表示仍待发送。积压增加应告警，死信仍需要人工修复与重投，不能把重连等同于死信自动修复。
+- 排名：`ranking refresh failed` 表示刷新失败。响应 `X-Feed-Snapshot`、`rankedAt`、`snapshotExpiresAt` 可用于检查版本；`feed_snapshots` 过期行由 Worker 定期删除。如果 Worker 长期停止，API 仍能按需生成榜单，但过期行不会被清理，应恢复 Worker。
+
+缓存失效与 Pub/Sub 是尽力执行，Redis 故障窗口可能造成最多一个缓存 TTL 的计数延迟。登录/注册的降级限流只覆盖单进程预算，不应替代多实例网关的统一限流。数据库/媒体磁盘不可恢复故障仍执行前述备份恢复流程。
