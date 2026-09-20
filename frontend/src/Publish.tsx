@@ -11,6 +11,7 @@ import {
   errorMessage,
 } from "./ui";
 import { api, json, type User, type Video } from "./api";
+import { uploadChunk, uploadProgress } from "./upload";
 
 const CHUNK = 5 * 1024 * 1024;
 const MAX = 200 * 1024 * 1024;
@@ -62,6 +63,7 @@ export default function Publish({
     try {
       setPhase("正在校验视频");
       const md5 = await hashFile(file, (f) => setProgress(Math.round(f * 15)));
+      setPhase("正在准备上传");
       const key = `owlet-upload:${user.id}:${md5}`;
       let uploadId = localStorage.getItem(key) || "";
       let uploaded: number[] = [];
@@ -71,7 +73,7 @@ export default function Publish({
             uploaded: number[];
             completed: boolean;
             published: boolean;
-          }>("/uploads/" + uploadId);
+          }>("/uploads/" + uploadId, { signal: AbortSignal.timeout(30000) });
           if (status.published) {
             uploadId = "";
           } else if (status.completed) {
@@ -82,13 +84,15 @@ export default function Publish({
           } else {
             uploaded = status.uploaded || [];
           }
-        } catch {
-          uploadId = "";
+        } catch (err) {
+          if (err instanceof Error && ["upload_not_found", "invalid_upload"].includes(err.message)) uploadId = "";
+          else throw err;
         }
       }
       if (!uploadId) {
         const init = await api<{ id: string }>("/uploads", {
           method: "POST",
+          signal: AbortSignal.timeout(30000),
           body: json({
             md5,
             size: file.size,
@@ -100,9 +104,14 @@ export default function Publish({
       }
       const count = Math.ceil(file.size / CHUNK);
       const done = new Set(uploaded);
+      const inFlight = new Map<number, number>();
+      const updateProgress = () => setProgress(uploadProgress(file.size, CHUNK, done, inFlight));
+      const controller = new AbortController();
+      let firstError: unknown;
       let cursor = 0;
       let stopped = false;
       setPhase("正在上传");
+      updateProgress();
       const worker = async () => {
         try {
           while (cursor < count && !stopped) {
@@ -114,16 +123,17 @@ export default function Publish({
             );
             const bytes = await part.arrayBuffer();
             const hash = SparkMD5.ArrayBuffer.hash(bytes);
-            await api("/uploads/" + uploadId + "/chunks/" + i, {
-              method: "PUT",
-              headers: { "X-Chunk-MD5": hash },
-              body: part,
-            });
+            if (stopped) return;
+            await uploadChunk("/uploads/" + uploadId + "/chunks/" + i, part, hash,
+              controller.signal, (loaded) => { inFlight.set(i, loaded); updateProgress(); });
             done.add(i);
-            setProgress(15 + Math.round((done.size / count) * 70));
+            inFlight.delete(i);
+            updateProgress();
           }
         } catch (err) {
+          if (!stopped) firstError = err;
           stopped = true;
+          controller.abort();
           throw err;
         }
       };
@@ -133,9 +143,9 @@ export default function Publish({
       const failure = results.find(
         (r): r is PromiseRejectedResult => r.status === "rejected",
       );
-      if (failure) throw failure.reason;
+      if (failure) throw firstError || failure.reason;
       setPhase("正在处理视频");
-      await api("/uploads/" + uploadId + "/complete", { method: "POST" });
+      await api("/uploads/" + uploadId + "/complete", { method: "POST", signal: AbortSignal.timeout(120000) });
       let coverId = "";
       if (cover) {
         setPhase("正在上传封面");
@@ -143,6 +153,7 @@ export default function Publish({
         form.set("file", cover);
         const result = await api<{ coverId: string }>("/covers", {
           method: "POST",
+          signal: AbortSignal.timeout(120000),
           body: form,
         });
         coverId = result.coverId;
@@ -150,6 +161,7 @@ export default function Publish({
       setPhase("正在发布");
       const video = await api<Video>("/videos", {
         method: "POST",
+        signal: AbortSignal.timeout(30000),
         body: json({ uploadId, title, description, coverId }),
       });
       localStorage.removeItem(key);

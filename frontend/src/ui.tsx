@@ -228,6 +228,7 @@ export function useResource<T>(path: string | null) {
   return { data, setData, error, loading, reload };
 }
 export function errorMessage(error: unknown) {
+  if (error instanceof Error && error.name === "TimeoutError") return "请求超时，请检查网络后重新提交，已上传的分片会保留。";
   const code = error instanceof Error ? error.message : String(error);
   const messages: Record<string, string> = {
     login_required: "请先登录后继续操作。",
@@ -241,6 +242,9 @@ export function errorMessage(error: unknown) {
     invalid_comment: "评论内容为空或过长，请修改后重试。",
     invalid_message: "消息内容为空或过长，请修改后重试。",
     rate_limited: "操作过于频繁，请稍后重试。",
+    upload_timeout: "上传连接长时间无响应，已中断。请检查网络后重新提交，已完成的分片会保留。",
+    upload_network_error: "上传连接中断。请检查网络或代理后重新提交，可继续上传。",
+    upload_cancelled: "上传已中断，重新提交可继续上传。",
     feed_cursor_expired: "榜单已更新，请点击重试重新加载。",
     feed_temporarily_unavailable: "视频列表暂时无法加载，请稍后重试。",
     video_temporarily_unavailable: "视频信息暂时无法加载，请稍后重试。",

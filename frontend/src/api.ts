@@ -8,13 +8,19 @@ export type Feed = { items: Video[]; nextCursor: string };
 const prefix = '/api/v1';
 let refreshPromise: Promise<boolean> | null = null;
 
+export function refreshSession(): Promise<boolean> {
+  refreshPromise ??= fetch(prefix + '/auth/refresh', {
+    method: 'POST', credentials: 'same-origin', signal: AbortSignal.timeout(30000),
+  }).then(r => r.ok).finally(() => { refreshPromise = null; });
+  return refreshPromise;
+}
+
 export async function api<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body && !(init.body instanceof FormData) && !(init.body instanceof Blob)) headers.set('Content-Type', 'application/json');
   const response = await fetch(prefix + path, { ...init, headers, credentials: 'same-origin' });
   if (response.status === 401 && retry && !path.startsWith('/auth/')) {
-    refreshPromise ??= fetch(prefix + '/auth/refresh', { method: 'POST', credentials: 'same-origin' }).then(r => r.ok).finally(() => { refreshPromise = null; });
-    if (await refreshPromise) return api<T>(path, init, false);
+    if (await refreshSession()) return api<T>(path, init, false);
   }
   if (!response.ok) {
     let code = `HTTP ${response.status}`;
