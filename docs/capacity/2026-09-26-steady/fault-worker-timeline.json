@@ -1,0 +1,26 @@
+[
+  {
+    "at": "2026-09-26T05:15:49.069405+00:00",
+    "action": "stop worker",
+    "phase": "start"
+  },
+  {
+    "at": "2026-09-26T05:15:49.897341+00:00",
+    "action": "stop worker",
+    "phase": "end",
+    "returncode": 0,
+    "output": " Container owlet-capacity-worker-1 Stopping \n Container owlet-capacity-worker-1 Stopped \n"
+  },
+  {
+    "at": "2026-09-26T05:16:09.897970+00:00",
+    "action": "start worker",
+    "phase": "start"
+  },
+  {
+    "at": "2026-09-26T05:16:11.771199+00:00",
+    "action": "start worker",
+    "phase": "end",
+    "returncode": 0,
+    "output": " Container owlet-capacity-redis-1 Waiting \n Container owlet-capacity-rabbitmq-1 Waiting \n Container owlet-capacity-mysql-1 Waiting \n Container owlet-capacity-redis-1 Healthy \n Container owlet-capacity-rabbitmq-1 Healthy \n Container owlet-capacity-mysql-1 Healthy \n Container owlet-capacity-api-1 Waiting \n Container owlet-capacity-api-1 Healthy \n Container owlet-capacity-worker-1 Starting \n Container owlet-capacity-worker-1 Started \n"
+  }
+]

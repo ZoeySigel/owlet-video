@@ -76,6 +76,7 @@ func main() {
 	}
 	switch mode {
 	case "api":
+		go app.monitorWrites(ctx)
 		server := &http.Server{Addr: cfg.Addr, Handler: app.router(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
 		go func() {
 			<-ctx.Done()

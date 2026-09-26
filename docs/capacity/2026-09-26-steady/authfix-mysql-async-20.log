@@ -1,0 +1,9 @@
+[mysql] 2026/09/26 17:54:01 packets.go:37: read tcp 127.0.0.1:62311->127.0.0.1:23316: wsarecv: An established connection was aborted by the software in your host machine.
+[mysql] 2026/09/26 17:54:21 packets.go:37: unexpected EOF
+[mysql] 2026/09/26 17:54:21 packets.go:37: unexpected EOF
+[mysql] 2026/09/26 17:54:21 packets.go:37: unexpected EOF
+[mysql] 2026/09/26 17:54:26 packets.go:37: unexpected EOF
+[mysql] 2026/09/26 17:54:26 packets.go:37: unexpected EOF
+[mysql] 2026/09/26 17:54:26 packets.go:37: unexpected EOF
+PROGRESS elapsed=55s pendingOutbox=2 pendingCommands=0 completed=42935 monitorError=""
+async target=20 sent=1800 success=906 errors=894 dropped=0 p95=3003.5ms p99=3004.7ms drain=1.1s

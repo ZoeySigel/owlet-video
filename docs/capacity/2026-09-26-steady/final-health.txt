@@ -1,0 +1,1 @@
+{"database": "ok", "redis": "ok", "status": "ok", "writes": {"checkedAt": "2026-09-26T10:02:25.573591979Z", "oldestSeconds": 0, "pendingCommandsCapped": 0, "pendingOutboxCapped": 0, "reason": "", "rejected": 4991, "status": "ok"}}

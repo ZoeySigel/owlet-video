@@ -59,6 +59,10 @@ services:
       FEED_RANK_LIMIT: ${FEED_RANK_LIMIT:-2000}
       REDIS_TIMEOUT: ${REDIS_TIMEOUT:-200ms}
       DB_TIMEOUT: ${DB_TIMEOUT:-3s}
+      WRITE_RPS: ${WRITE_RPS:-20}
+      WRITE_BURST: ${WRITE_BURST:-20}
+      WRITE_MAX_PENDING: ${WRITE_MAX_PENDING:-200}
+      WRITE_MAX_AGE: ${WRITE_MAX_AGE:-10s}
     volumes: ["./data:/var/lib/owlet-video"]
     depends_on:
       mysql: { condition: service_healthy }

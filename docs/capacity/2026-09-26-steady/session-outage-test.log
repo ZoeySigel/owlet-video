@@ -1,0 +1,10 @@
+=== RUN   TestAuthDatabaseOutageIsRetryableAndBounded
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /protected                --> github.com/ZoeySigel/owlet-video/backend.TestAuthDatabaseOutageIsRetryableAndBounded.func4 (2 handlers)
+--- PASS: TestAuthDatabaseOutageIsRetryableAndBounded (0.08s)
+PASS
+ok  	github.com/ZoeySigel/owlet-video/backend	4.430s
+?   	github.com/ZoeySigel/owlet-video/backend/tools/capacity	[no test files]

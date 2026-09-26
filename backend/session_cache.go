@@ -18,6 +18,8 @@ import (
 // Redis cannot resurrect a revoked session, including across API instances.
 const sessionLease = 5 * time.Second
 
+var errInvalidSession = errors.New("invalid_session")
+
 type cachedSession struct {
 	Session Session
 	Until   time.Time
@@ -34,7 +36,7 @@ func (a *App) loadSession(ctx context.Context, id string) (Session, error) {
 	})
 	if err == nil {
 		if raw == "revoked" {
-			return Session{}, errors.New("invalid_session")
+			return Session{}, errInvalidSession
 		}
 		if json.Unmarshal([]byte(raw), &cached) == nil && cached.Session.ID == id && time.Now().Before(cached.Until) {
 			return cached.Session, nil
@@ -42,11 +44,13 @@ func (a *App) loadSession(ctx context.Context, id string) (Session, error) {
 	}
 	until := time.Now().Add(sessionLease)
 	var s Session
-	if err := a.db.WithContext(ctx).First(&s, "id = ?", id).Error; err != nil {
+	dbCtx, cancel := context.WithTimeout(ctx, a.state().cfg.DBTimeout)
+	defer cancel()
+	if err := a.db.WithContext(dbCtx).First(&s, "id = ?", id).Error; err != nil {
 		return s, err
 	}
 	if s.RevokedAt != nil || !time.Now().Before(s.ExpiresAt) {
-		return s, errors.New("invalid_session")
+		return s, errInvalidSession
 	}
 	rawBytes, _ := json.Marshal(cachedSession{s, until})
 	if ttl := time.Until(until); ttl > 0 {
@@ -115,6 +119,11 @@ func (a *App) authenticate(c *gin.Context, optional bool) {
 		return
 	}
 	s, err := a.loadSession(c.Request.Context(), claims.SessionID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) && !errors.Is(err, errInvalidSession) {
+		c.Header("Retry-After", "1")
+		errorJSON(c, 503, "auth_unavailable")
+		return
+	}
 	if err != nil || s.UserID != uint(uid) || s.RevokedAt != nil || !time.Now().Before(s.ExpiresAt) {
 		errorJSON(c, 401, "invalid_session")
 		return

@@ -1,0 +1,6 @@
+{"status": "ok", "writes": {"status": "ok"}}
+{"status": "ok", "writes": {"status": "degraded"}}
+{"status": "ok", "writes": {"status": "unknown"}}
+{"status": "degraded", "writes": {"status": "ok"}}
+{"status": "unavailable", "error": "test outage"}
+monitor adapter checks passed

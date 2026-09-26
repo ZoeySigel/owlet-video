@@ -99,8 +99,8 @@ type Outbox struct {
 	ID          string     `gorm:"primaryKey;size:36"`
 	Kind        string     `gorm:"size:50;not null"`
 	Payload     []byte     `gorm:"type:blob;not null"`
-	PublishedAt *time.Time `gorm:"index"`
-	CreatedAt   time.Time
+	PublishedAt *time.Time `gorm:"index;index:idx_outbox_pending_created,priority:1"`
+	CreatedAt   time.Time  `gorm:"index:idx_outbox_pending_created,priority:2"`
 }
 type ProcessedEvent struct {
 	ID        string `gorm:"primaryKey;size:36"`

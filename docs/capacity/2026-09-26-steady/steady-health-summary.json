@@ -1,0 +1,41 @@
+{
+  "healthSamples": 267,
+  "healthErrors": 0,
+  "writeStates": [
+    "ok"
+  ],
+  "rejected": 0,
+  "maxOldestSeconds": 0.278276819,
+  "resources": {
+    "api": {
+      "firstMemory": "13.3MiB / 512MiB",
+      "lastMemory": "15.49MiB / 512MiB",
+      "maxMemoryPercent": 3.84,
+      "meanCPUPercent": 10.21565543071161
+    },
+    "worker": {
+      "firstMemory": "11.95MiB / 512MiB",
+      "lastMemory": "13.59MiB / 512MiB",
+      "maxMemoryPercent": 3.05,
+      "meanCPUPercent": 11.62940074906367
+    },
+    "mysql": {
+      "firstMemory": "809.9MiB / 1.5GiB",
+      "lastMemory": "1.166GiB / 1.5GiB",
+      "maxMemoryPercent": 77.86,
+      "meanCPUPercent": 27.35378277153558
+    },
+    "redis": {
+      "firstMemory": "7.293MiB / 256MiB",
+      "lastMemory": "24.21MiB / 256MiB",
+      "maxMemoryPercent": 10.97,
+      "meanCPUPercent": 4.443183520599251
+    },
+    "rabbitmq": {
+      "firstMemory": "98.25MiB / 768MiB",
+      "lastMemory": "100.4MiB / 768MiB",
+      "maxMemoryPercent": 23.02,
+      "meanCPUPercent": 38.504756554307114
+    }
+  }
+}

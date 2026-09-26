@@ -1,0 +1,26 @@
+[
+  {
+    "at": "2026-09-26T09:53:54.423349+00:00",
+    "action": "stop mysql",
+    "phase": "start"
+  },
+  {
+    "at": "2026-09-26T09:53:59.097292+00:00",
+    "action": "stop mysql",
+    "phase": "end",
+    "returncode": 0,
+    "output": " Container owlet-capacity-mysql-1 Stopping \n Container owlet-capacity-mysql-1 Stopped \n"
+  },
+  {
+    "at": "2026-09-26T09:54:19.097538+00:00",
+    "action": "start mysql",
+    "phase": "start"
+  },
+  {
+    "at": "2026-09-26T09:54:20.181322+00:00",
+    "action": "start mysql",
+    "phase": "end",
+    "returncode": 0,
+    "output": " Container owlet-capacity-mysql-1 Starting \n Container owlet-capacity-mysql-1 Started \n"
+  }
+]

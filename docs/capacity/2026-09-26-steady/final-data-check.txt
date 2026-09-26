@@ -1,0 +1,18 @@
+checked_at
+2026-09-26 10:02:23
+status	commands
+201	50683
+pending_commands
+0
+pending_outbox
+0
+comments	unique_request_bodies
+50683	50683
+expected_comment_notifications
+50666
+kind	notifications
+comment	50666
+Variable_name	Value
+binlog_group_commit_sync_delay	0
+innodb_flush_log_at_trx_commit	1
+sync_binlog	1

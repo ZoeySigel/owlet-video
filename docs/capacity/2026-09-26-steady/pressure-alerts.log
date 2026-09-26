@@ -1,0 +1,13 @@
+
+api-1  | 2026/09/26 05:15:59 write_pressure reason="write_backlog" pending_commands_capped=200 pending_outbox_capped=2 oldest_seconds=10.5 rejected=0
+api-1  | 2026/09/26 05:16:12 write_pressure reason="" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=252
+api-1  | 2026/09/26 05:19:20 write_pressure reason="write_backlog" pending_commands_capped=15 pending_outbox_capped=200 oldest_seconds=7.3 rejected=278
+api-1  | 2026/09/26 05:19:51 write_pressure reason="write_backlog" pending_commands_capped=0 pending_outbox_capped=200 oldest_seconds=37.7 rejected=886
+api-1  | 2026/09/26 05:19:54 write_pressure reason="" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=949
+api-1  | 2026/09/26 05:20:56 write_pressure reason="write_pressure_unavailable" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=949
+api-1  | 2026/09/26 05:21:23 write_pressure reason="write_backlog" pending_commands_capped=0 pending_outbox_capped=1 oldest_seconds=29.0 rejected=949
+api-1  | 2026/09/26 05:21:39 write_pressure reason="" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=1265
+api-1  | 2026/09/26 09:53:55 write_pressure reason="write_pressure_unavailable" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=0
+api-1  | 2026/09/26 09:54:29 write_pressure reason="write_backlog" pending_commands_capped=0 pending_outbox_capped=2 oldest_seconds=34.3 rejected=0
+api-1  | 2026/09/26 09:54:39 write_pressure reason="" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=210
+

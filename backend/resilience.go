@@ -206,6 +206,7 @@ func (l *memoryLimiter) take(key string, max int64, window time.Duration, now ti
 }
 
 type appRuntime struct {
+	writes                                                          writeAdmission
 	publisher                                                       commandPublisher
 	cfg                                                             Config
 	flights                                                         flightGroup
@@ -263,5 +264,5 @@ func (a *App) health(c *gin.Context) {
 	if a.withRedis(c.Request.Context(), func(ctx context.Context) error { return a.redis.Ping(ctx).Err() }) != nil {
 		status, cache = "degraded", "unavailable"
 	}
-	c.JSON(200, gin.H{"status": status, "database": "ok", "redis": cache})
+	c.JSON(200, gin.H{"status": status, "database": "ok", "redis": cache, "writes": a.state().writes.view()})
 }

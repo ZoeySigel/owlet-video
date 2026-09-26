@@ -1,0 +1,2 @@
+PROGRESS elapsed=55s pendingOutbox=2 pendingCommands=1 completed=1099 monitorError=""
+async target=20 sent=1200 success=1200 errors=0 dropped=0 p95=86.3ms p99=126.5ms drain=1.0s

@@ -1,0 +1,4 @@
+# Isolated, freshly seeded fixture for sustained capacity and fault validation.
+volumes:
+  capacity_mysql:
+    name: owlet-capacity-soak-20260926

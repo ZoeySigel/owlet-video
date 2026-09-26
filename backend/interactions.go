@@ -28,10 +28,10 @@ type InteractionCommand struct {
 	Body         string `gorm:"size:1000"`
 	Result       []byte `gorm:"type:blob"`
 	Status       int
-	EventID      string `gorm:"size:36"`
-	EventPayload []byte `gorm:"-" json:"-"`
-	CompletedAt  *time.Time
-	CreatedAt    time.Time
+	EventID      string     `gorm:"size:36"`
+	EventPayload []byte     `gorm:"-" json:"-"`
+	CompletedAt  *time.Time `gorm:"index:idx_command_pending_created,priority:1"`
+	CreatedAt    time.Time  `gorm:"index:idx_command_pending_created,priority:2"`
 }
 
 type commandConnection struct {
@@ -149,9 +149,22 @@ func (a *App) interaction(c *gin.Context, kind string) {
 		errorJSON(c, 400, "cannot_follow_self")
 		return
 	}
+	release, reason := a.admitWrite(c.Request.Context())
+	if reason != "" {
+		c.Header("Retry-After", "1")
+		status := 503
+		if reason == "write_rate_limited" {
+			status = 429
+		}
+		errorJSON(c, status, reason)
+		return
+	}
+	defer release()
 	e := event{ID: cmd.ID, Kind: "interaction.requested", Data: map[string]any{"commandId": cmd.ID}}
 	raw, _ := json.Marshal(e)
-	if err := a.db.Transaction(func(tx *gorm.DB) error {
+	admissionCtx, admissionCancel := context.WithTimeout(c.Request.Context(), a.state().cfg.DBTimeout)
+	defer admissionCancel()
+	if err := a.db.WithContext(admissionCtx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&cmd).Error; err != nil {
 			return err
 		}

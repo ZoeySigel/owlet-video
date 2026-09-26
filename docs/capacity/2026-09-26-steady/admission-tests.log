@@ -1,0 +1,12 @@
+=== RUN   TestWriteAdmissionConcurrentBudget
+--- PASS: TestWriteAdmissionConcurrentBudget (0.00s)
+=== RUN   TestWritePressureRejectsBeforePersistenceAndRecovers
+2026/09/26 12:40:38 write_pressure reason="write_backlog" pending_commands_capped=1 pending_outbox_capped=0 oldest_seconds=60.0 rejected=0
+2026/09/26 12:40:38 write_pressure reason="" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=1
+2026/09/26 12:40:38 write_pressure reason="write_backlog" pending_commands_capped=0 pending_outbox_capped=2 oldest_seconds=0.0 rejected=1
+2026/09/26 12:40:38 write_pressure reason="write_pressure_unavailable" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=1
+2026/09/26 12:40:38 write_pressure reason="" pending_commands_capped=0 pending_outbox_capped=0 oldest_seconds=0.0 rejected=1
+--- PASS: TestWritePressureRejectsBeforePersistenceAndRecovers (0.40s)
+PASS
+ok  	github.com/ZoeySigel/owlet-video/backend	5.114s
+?   	github.com/ZoeySigel/owlet-video/backend/tools/capacity	[no test files]

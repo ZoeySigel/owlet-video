@@ -1,0 +1,198 @@
+{
+  "scenario": "async",
+  "targetRps": 100,
+  "Started": "2026-09-26T09:55:57.8417211Z",
+  "Finished": "2026-09-26T09:56:58.9512387Z",
+  "windowSeconds": 60,
+  "Planned": 6000,
+  "Sent": 6000,
+  "Dropped": 0,
+  "Success": 1219,
+  "Errors": 4781,
+  "Limited": 4781,
+  "successRps": 20.316666666666794,
+  "status": {
+    "202": 1219,
+    "429": 4781
+  },
+  "execution": {},
+  "LatencyMS": {
+    "count": 6000,
+    "P50": 3.452,
+    "P95": 26.254,
+    "P99": 45.71,
+    "Max": 275.056
+  },
+  "SuccessLatencyMS": {
+    "count": 1219,
+    "P50": 23.136,
+    "P95": 45.649,
+    "P99": 108.605,
+    "Max": 275.056
+  },
+  "SchedulerLagMS": {
+    "count": 6000,
+    "P50": 0.37,
+    "P95": 0.68,
+    "P99": 0.937,
+    "Max": 3.487
+  },
+  "endpoints": {
+    "async": {
+      "count": 6000,
+      "P50": 3.452,
+      "P95": 26.254,
+      "P99": 45.71,
+      "Max": 275.056
+    }
+  },
+  "errorSamples": [
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}",
+    "async status=429 {\"error\":\"write_rate_limited\"}"
+  ],
+  "backlog": [
+    {
+      "at": "2026-09-26T09:55:57.8051919Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 43464,
+      "failedCommands": 0,
+      "notifications": 43450
+    },
+    {
+      "at": "2026-09-26T09:56:02.8419964Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 43583,
+      "failedCommands": 0,
+      "notifications": 43567
+    },
+    {
+      "at": "2026-09-26T09:56:07.8418283Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 0,
+      "completedCommands": 43683,
+      "failedCommands": 0,
+      "notifications": 43666
+    },
+    {
+      "at": "2026-09-26T09:56:12.842252Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 0,
+      "completedCommands": 43783,
+      "failedCommands": 0,
+      "notifications": 43766
+    },
+    {
+      "at": "2026-09-26T09:56:17.8420728Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 43883,
+      "failedCommands": 0,
+      "notifications": 43867
+    },
+    {
+      "at": "2026-09-26T09:56:22.8421968Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 43983,
+      "failedCommands": 0,
+      "notifications": 43967
+    },
+    {
+      "at": "2026-09-26T09:56:27.8421455Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44083,
+      "failedCommands": 0,
+      "notifications": 44067
+    },
+    {
+      "at": "2026-09-26T09:56:32.841943Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44183,
+      "failedCommands": 0,
+      "notifications": 44167
+    },
+    {
+      "at": "2026-09-26T09:56:37.8422092Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44283,
+      "failedCommands": 0,
+      "notifications": 44267
+    },
+    {
+      "at": "2026-09-26T09:56:42.8418753Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44383,
+      "failedCommands": 0,
+      "notifications": 44367
+    },
+    {
+      "at": "2026-09-26T09:56:47.8423293Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44483,
+      "failedCommands": 0,
+      "notifications": 44467
+    },
+    {
+      "at": "2026-09-26T09:56:52.8419295Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44583,
+      "failedCommands": 0,
+      "notifications": 44567
+    },
+    {
+      "at": "2026-09-26T09:56:57.8423357Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44683,
+      "failedCommands": 0,
+      "notifications": 44667
+    },
+    {
+      "at": "2026-09-26T09:56:57.8713609Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 44683,
+      "failedCommands": 0,
+      "notifications": 44667
+    },
+    {
+      "at": "2026-09-26T09:56:58.9009857Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 44683,
+      "failedCommands": 0,
+      "notifications": 44668
+    }
+  ],
+  "drainSeconds": 1.0574196,
+  "CommandsCreated": 1219,
+  "CommandsCompleted": 1219,
+  "CommandsFailed": 0,
+  "AcceptedAsync": 1219,
+  "AcceptedAsyncCompleted": 1219,
+  "CommandCompletionMS": {
+    "count": 1219,
+    "P50": 13,
+    "P95": 23,
+    "P99": 81,
+    "Max": 270
+  }
+}

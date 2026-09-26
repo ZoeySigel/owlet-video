@@ -1,0 +1,106 @@
+{
+  "authfix-mysql-async-20-resources": {
+    "healthReadErrors": 4,
+    "writeReasons": [
+      "",
+      "write_backlog"
+    ],
+    "lastHealth": {
+      "database": "ok",
+      "redis": "ok",
+      "status": "ok",
+      "writes": {
+        "checkedAt": "2026-09-26T09:55:04.664025624Z",
+        "oldestSeconds": 0.051025624,
+        "pendingCommandsCapped": 0,
+        "pendingOutboxCapped": 2,
+        "reason": "",
+        "rejected": 210,
+        "status": "ok"
+      }
+    }
+  },
+  "fault-mysql-async-20-resources": {
+    "healthReadErrors": 4,
+    "writeReasons": [
+      "",
+      "write_backlog"
+    ],
+    "lastHealth": {
+      "database": "ok",
+      "redis": "ok",
+      "status": "ok",
+      "writes": {
+        "checkedAt": "2026-09-26T05:22:04.356612324Z",
+        "oldestSeconds": 0.108612324,
+        "pendingCommandsCapped": 1,
+        "pendingOutboxCapped": 2,
+        "reason": "",
+        "rejected": 1265,
+        "status": "ok"
+      }
+    }
+  },
+  "fault-worker-async-20-resources": {
+    "healthReadErrors": 0,
+    "writeReasons": [
+      "",
+      "write_backlog"
+    ],
+    "lastHealth": {
+      "database": "ok",
+      "redis": "ok",
+      "status": "ok",
+      "writes": {
+        "checkedAt": "2026-09-26T05:16:59.444925779Z",
+        "oldestSeconds": 0,
+        "pendingCommandsCapped": 0,
+        "pendingOutboxCapped": 0,
+        "reason": "",
+        "rejected": 252,
+        "status": "ok"
+      }
+    }
+  },
+  "fault-rabbitmq-async-20-resources": {
+    "healthReadErrors": 0,
+    "writeReasons": [
+      "",
+      "write_backlog"
+    ],
+    "lastHealth": {
+      "database": "ok",
+      "redis": "ok",
+      "status": "ok",
+      "writes": {
+        "checkedAt": "2026-09-26T05:20:21.63647419Z",
+        "oldestSeconds": 0,
+        "pendingCommandsCapped": 0,
+        "pendingOutboxCapped": 0,
+        "reason": "",
+        "rejected": 949,
+        "status": "ok"
+      }
+    }
+  },
+  "fault-redis-async-20-resources": {
+    "healthReadErrors": 0,
+    "writeReasons": [
+      ""
+    ],
+    "lastHealth": {
+      "database": "ok",
+      "redis": "ok",
+      "status": "ok",
+      "writes": {
+        "checkedAt": "2026-09-26T05:18:37.363844472Z",
+        "oldestSeconds": 0,
+        "pendingCommandsCapped": 0,
+        "pendingOutboxCapped": 0,
+        "reason": "",
+        "rejected": 252,
+        "status": "ok"
+      }
+    }
+  }
+}

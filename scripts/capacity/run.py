@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 import threading
 import time
+import urllib.request
+import urllib.error
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTAINERS = [f"owlet-capacity-{name}-1" for name in ("api", "worker", "mysql", "redis", "rabbitmq")]
@@ -28,6 +30,12 @@ def resources(stop, path):
                     stream.write(json.dumps({"at": now, "error": proc.stderr.strip()}) + "\n")
             except (subprocess.TimeoutExpired, ValueError) as error:
                 stream.write(json.dumps({"at": now, "error": str(error)}) + "\n")
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:28080/healthz", timeout=2) as response:
+                    health = json.load(response)
+                stream.write(json.dumps({"at": now, "health": health}) + "\n")
+            except (OSError, ValueError) as error:
+                stream.write(json.dumps({"at": now, "healthError": str(error)}) + "\n")
             stream.flush()
             stop.wait(5)
 

@@ -1,0 +1,262 @@
+{
+  "scenario": "async",
+  "targetRps": 20,
+  "Started": "2026-09-26T05:20:34.6516139Z",
+  "Finished": "2026-09-26T05:22:05.8225409Z",
+  "windowSeconds": 90,
+  "Planned": 1800,
+  "Sent": 1800,
+  "Dropped": 0,
+  "Success": 907,
+  "Errors": 893,
+  "Limited": 0,
+  "successRps": 10.066666666666634,
+  "status": {
+    "0": 237,
+    "202": 907,
+    "401": 341,
+    "503": 315
+  },
+  "execution": {},
+  "LatencyMS": {
+    "count": 1800,
+    "P50": 22.008,
+    "P95": 10000.476,
+    "P99": 10000.919,
+    "Max": 10004.495
+  },
+  "SuccessLatencyMS": {
+    "count": 907,
+    "P50": 21.944,
+    "P95": 56.721,
+    "P99": 65.219,
+    "Max": 128.615
+  },
+  "SchedulerLagMS": {
+    "count": 1800,
+    "P50": 0.359,
+    "P95": 0.8,
+    "P99": 1.383,
+    "Max": 50.123
+  },
+  "endpoints": {
+    "async": {
+      "count": 1800,
+      "P50": 22.008,
+      "P95": 10000.476,
+      "P99": 10000.919,
+      "Max": 10004.495
+    }
+  },
+  "errorSamples": [
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}",
+    "async status=401 {\"error\":\"invalid_session\"}"
+  ],
+  "backlog": [
+    {
+      "at": "2026-09-26T05:20:34.6176946Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 41651,
+      "failedCommands": 0,
+      "notifications": 41639
+    },
+    {
+      "at": "2026-09-26T05:20:39.6520993Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 41751,
+      "failedCommands": 0,
+      "notifications": 41738
+    },
+    {
+      "at": "2026-09-26T05:20:44.6517253Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 0,
+      "completedCommands": 41851,
+      "failedCommands": 0,
+      "notifications": 41836
+    },
+    {
+      "at": "2026-09-26T05:20:49.6520918Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 0,
+      "completedCommands": 41951,
+      "failedCommands": 0,
+      "notifications": 41937
+    },
+    {
+      "at": "2026-09-26T05:20:54.651926Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 0,
+      "failedCommands": 0,
+      "notifications": 0,
+      "error": "Error 1053 (08S01): Server shutdown in progress"
+    },
+    {
+      "at": "2026-09-26T05:20:59.6517062Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 0,
+      "failedCommands": 0,
+      "notifications": 0,
+      "error": "invalid connection"
+    },
+    {
+      "at": "2026-09-26T05:21:04.6518025Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 0,
+      "failedCommands": 0,
+      "notifications": 0,
+      "error": "dial tcp 127.0.0.1:23316: connectex: No connection could be made because the target machine actively refused it."
+    },
+    {
+      "at": "2026-09-26T05:21:09.6519433Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 0,
+      "failedCommands": 0,
+      "notifications": 0,
+      "error": "dial tcp 127.0.0.1:23316: connectex: No connection could be made because the target machine actively refused it."
+    },
+    {
+      "at": "2026-09-26T05:21:14.6523568Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 0,
+      "failedCommands": 0,
+      "notifications": 0,
+      "error": "dial tcp 127.0.0.1:23316: connectex: No connection could be made because the target machine actively refused it."
+    },
+    {
+      "at": "2026-09-26T05:21:19.6519361Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 0,
+      "failedCommands": 0,
+      "notifications": 0,
+      "error": "driver: bad connection"
+    },
+    {
+      "at": "2026-09-26T05:21:24.6521681Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42048,
+      "failedCommands": 0,
+      "notifications": 42034
+    },
+    {
+      "at": "2026-09-26T05:21:29.6517114Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42048,
+      "failedCommands": 0,
+      "notifications": 42034
+    },
+    {
+      "at": "2026-09-26T05:21:34.6522111Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42048,
+      "failedCommands": 0,
+      "notifications": 42034
+    },
+    {
+      "at": "2026-09-26T05:21:39.6521954Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 42058,
+      "failedCommands": 0,
+      "notifications": 42045
+    },
+    {
+      "at": "2026-09-26T05:21:44.6519615Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42158,
+      "failedCommands": 0,
+      "notifications": 42144
+    },
+    {
+      "at": "2026-09-26T05:21:49.6518687Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 0,
+      "completedCommands": 42258,
+      "failedCommands": 0,
+      "notifications": 42243
+    },
+    {
+      "at": "2026-09-26T05:21:54.651803Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42358,
+      "failedCommands": 0,
+      "notifications": 42344
+    },
+    {
+      "at": "2026-09-26T05:21:59.6517936Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 42458,
+      "failedCommands": 0,
+      "notifications": 42445
+    },
+    {
+      "at": "2026-09-26T05:22:04.6520771Z",
+      "pendingOutbox": 3,
+      "pendingCommands": 1,
+      "completedCommands": 42557,
+      "failedCommands": 0,
+      "notifications": 42543
+    },
+    {
+      "at": "2026-09-26T05:22:04.6870026Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42558,
+      "failedCommands": 0,
+      "notifications": 42544
+    },
+    {
+      "at": "2026-09-26T05:22:04.7185578Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 0,
+      "completedCommands": 42558,
+      "failedCommands": 0,
+      "notifications": 42544
+    },
+    {
+      "at": "2026-09-26T05:22:05.7612092Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 42558,
+      "failedCommands": 0,
+      "notifications": 42545
+    }
+  ],
+  "drainSeconds": 1.080634,
+  "CommandsCreated": 907,
+  "CommandsCompleted": 907,
+  "CommandsFailed": 0,
+  "AcceptedAsync": 907,
+  "AcceptedAsyncCompleted": 907,
+  "CommandCompletionMS": {
+    "count": 907,
+    "P50": 13,
+    "P95": 46,
+    "P99": 48,
+    "Max": 96
+  }
+}

@@ -1,0 +1,4 @@
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	interaction_commands	NULL	ref	idx_command_pending_created	idx_command_pending_created	8	const	1	100.00	Using where; Using index
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	outboxes	NULL	ref	idx_outboxes_published_at,idx_outbox_pending_created	idx_outbox_pending_created	8	const	3	100.00	Using where; Using index
