@@ -1,0 +1,133 @@
+=== RUN   TestCursorRoundTrip
+--- PASS: TestCursorRoundTrip (0.00s)
+=== RUN   TestJWTKindAndExpiry
+--- PASS: TestJWTKindAndExpiry (0.00s)
+=== RUN   TestIntegrationFlow
+[GIN] 2026/09/25 - 22:54:18 | 201 |    1.8160822s |       192.0.2.1 | POST     "/api/v1/auth/register"
+[GIN] 2026/09/25 - 22:54:20 | 201 |    1.8844213s |       192.0.2.1 | POST     "/api/v1/auth/register"
+
+2026/09/25 22:54:20 [31;1mD:/coding/owlet-video/backend/video.go:85 [35;1mrecord not found
+[0m[33m[4.221ms] [34;1m[rows:0][0m SELECT * FROM `uploads` WHERE user_id = 1 AND file_md5 = '7be58e637a064affb6ba12b7b5f2488e' AND size = 20 AND chunks = 1 AND published = false AND created_at > '2026-09-24 14:54:20.764' ORDER BY created_at DESC,`uploads`.`id` LIMIT 1
+[GIN] 2026/09/25 - 22:54:20 | 201 |     33.4315ms |       192.0.2.1 | POST     "/api/v1/uploads"
+[GIN] 2026/09/25 - 22:54:20 | 201 |     11.9478ms |       192.0.2.1 | POST     "/api/v1/uploads"
+
+2026/09/25 22:54:20 [31;1mD:/coding/owlet-video/backend/video.go:82 [35;1mrecord not found
+[0m[33m[3.066ms] [34;1m[rows:0][0m SELECT * FROM `uploads` WHERE (user_id = 1 AND file_md5 = '7be58e637a064affb6ba12b7b5f2488e' AND size = 20 AND chunks = 1 AND published = false AND created_at > '2026-09-24 14:54:20.806') AND id = '6514bc6f-db98-4208-99ad-33028e589a01' ORDER BY `uploads`.`id` LIMIT 1
+[GIN] 2026/09/25 - 22:54:20 | 201 |     16.2757ms |       192.0.2.1 | POST     "/api/v1/uploads"
+[GIN] 2026/09/25 - 22:54:20 | 200 |     19.9117ms |       192.0.2.1 | PUT      "/api/v1/uploads/ae092bd9-9a22-417a-a852-7002e301be67/chunks/0"
+[GIN] 2026/09/25 - 22:54:20 | 200 |     24.9169ms |       192.0.2.1 | POST     "/api/v1/uploads/ae092bd9-9a22-417a-a852-7002e301be67/complete"
+[GIN] 2026/09/25 - 22:54:20 | 201 |     43.7075ms |       192.0.2.1 | POST     "/api/v1/videos"
+[GIN] 2026/09/25 - 22:54:20 | 200 |     53.2951ms |       192.0.2.1 | GET      "/api/v1/videos?sort=latest"
+[GIN] 2026/09/25 - 22:54:21 | 200 |    901.0247ms |       192.0.2.1 | PUT      "/api/v1/videos/1/like"
+[GIN] 2026/09/25 - 22:54:22 | 201 |    788.6797ms |       192.0.2.1 | POST     "/api/v1/videos/1/comments"
+[GIN] 2026/09/25 - 22:54:23 | 200 |    795.6334ms |       192.0.2.1 | PUT      "/api/v1/users/1/follow"
+[GIN] 2026/09/25 - 22:54:23 | 201 |     14.8411ms |       192.0.2.1 | POST     "/api/v1/messages/1"
+
+2026/09/25 22:54:23 [31;1mD:/coding/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+[0m[33m[16.371ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'dbc69325-9c39-5d13-8158-a9c765d87014' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+
+2026/09/25 22:54:23 [31;1mD:/coding/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+[0m[33m[3.222ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '5de34a89-369e-590a-8f0f-45df6e8be334' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+
+2026/09/25 22:54:23 [31;1mD:/coding/owlet-video/backend/worker.go:309 [35;1mduplicated key not allowed
+[0m[33m[2.325ms] [34;1m[rows:0][0m INSERT INTO `processed_events` (`id`,`created_at`) VALUES ('ee0c1d06-01cd-4ed7-a7c5-e2c57a13434d','2026-09-25 14:54:23.684')
+--- PASS: TestIntegrationFlow (7.16s)
+=== RUN   TestSoftAuthAndProfilerIsolation
+[GIN] 2026/09/25 - 22:54:23 | 404 |            0s |       192.0.2.1 | GET      "/debug/pprof/"
+--- PASS: TestSoftAuthAndProfilerIsolation (0.00s)
+=== RUN   TestSessionCacheHealingRevocationAndRename
+[GIN] 2026/09/25 - 22:54:24 | 200 |       6.689ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:24 | 200 |     26.4098ms |       192.0.2.1 | PATCH    "/api/v1/me"
+[GIN] 2026/09/25 - 22:54:24 | 401 |       2.262ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:24 | 401 |      6.3048ms |       192.0.2.1 | POST     "/api/v1/auth/refresh"
+[GIN] 2026/09/25 - 22:54:24 | 200 |      7.3935ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:24 | 200 |     11.8122ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:29 | 200 |     5.006913s |       192.0.2.1 | POST     "/api/v1/auth/logout"
+[GIN] 2026/09/25 - 22:54:29 | 401 |     11.0915ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+--- PASS: TestSessionCacheHealingRevocationAndRename (5.58s)
+=== RUN   TestFollowingTimelineInvalidation
+--- PASS: TestFollowingTimelineInvalidation (0.60s)
+=== RUN   TestLikesKeysetTies
+[GIN] 2026/09/25 - 22:54:30 | 200 |      8.1027ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&pagination=keyset&cursor="
+[GIN] 2026/09/25 - 22:54:30 | 200 |     10.3754ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&pagination=keyset&cursor=eyJsaWtlcyI6MTAwMDAwMCwiaWQiOjMxfQ"
+[GIN] 2026/09/25 - 22:54:30 | 200 |     10.3985ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&pagination=keyset&cursor=eyJsaWtlcyI6MTAwMDAwMCwiaWQiOjExfQ"
+[GIN] 2026/09/25 - 22:54:30 | 400 |       589.4µs |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&pagination=keyset&cursor=bad"
+--- PASS: TestLikesKeysetTies (0.62s)
+=== RUN   TestPasswordRevokesEverySession
+[GIN] 2026/09/25 - 22:54:31 | 200 |      7.9705ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:31 | 200 |      9.0796ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:32 | 200 |    1.8428404s |       192.0.2.1 | PATCH    "/api/v1/auth/password"
+[GIN] 2026/09/25 - 22:54:32 | 401 |      2.3952ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+[GIN] 2026/09/25 - 22:54:33 | 401 |        2.24ms |       192.0.2.1 | GET      "/api/v1/auth/me"
+--- PASS: TestPasswordRevokesEverySession (2.40s)
+=== RUN   TestTimelineHotColdBoundaryAndRecovery
+--- PASS: TestTimelineHotColdBoundaryAndRecovery (3.07s)
+=== RUN   TestInteractionIdempotencyAndAccountLimits
+[GIN] 2026/09/25 - 22:54:36 | 400 |      7.8279ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      3.5972ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      3.3696ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      2.8032ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      4.3462ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      3.5315ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      3.1745ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      4.3602ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      3.4351ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |        3.37ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 429 |      2.4785ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+[GIN] 2026/09/25 - 22:54:36 | 400 |      8.4104ms |       192.0.2.1 | POST     "/api/v1/videos/1057/comments"
+--- PASS: TestInteractionIdempotencyAndAccountLimits (0.65s)
+=== RUN   TestHotSnapshotScoresAndBucketDeduplication
+--- PASS: TestHotSnapshotScoresAndBucketDeduplication (0.56s)
+=== RUN   TestAsyncWorkerAndBrokerFallback
+[GIN] 2026/09/25 - 22:54:37 | 202 |     77.2104ms |       192.0.2.1 | POST     "/api/v1/videos/1062/comments"
+[GIN] 2026/09/25 - 22:54:37 | 202 |       4.865ms |       192.0.2.1 | GET      "/api/v1/interactions/5b5e1466-6b4d-4640-952e-b840b20e46f2"
+[GIN] 2026/09/25 - 22:54:37 | 200 |      5.0904ms |       192.0.2.1 | GET      "/api/v1/interactions/5b5e1466-6b4d-4640-952e-b840b20e46f2"
+[GIN] 2026/09/25 - 22:54:37 | 200 |     60.0177ms |       192.0.2.1 | PUT      "/api/v1/videos/1062/like"
+--- PASS: TestAsyncWorkerAndBrokerFallback (0.69s)
+=== RUN   TestCommentRoundTripAndDuplicateWithEncodedParameters
+--- PASS: TestCommentRoundTripAndDuplicateWithEncodedParameters (0.49s)
+=== RUN   TestOutboxBatchConfirmsAndRetries
+--- PASS: TestOutboxBatchConfirmsAndRetries (1.88s)
+=== RUN   TestRankRefreshServesBoundedPreviousSnapshot
+2026/09/25 22:54:40 background ranking refresh failed (hot): sql: database is closed
+--- PASS: TestRankRefreshServesBoundedPreviousSnapshot (0.51s)
+=== RUN   TestRollingWindowAndRemoval
+--- PASS: TestRollingWindowAndRemoval (0.64s)
+=== RUN   TestSnapshotPagingSurvivesChangesAndRedisLoss
+[GIN] 2026/09/25 - 22:54:42 | 200 |     43.5343ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&cursor="
+[GIN] 2026/09/25 - 22:54:42 | 200 |     18.7611ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&cursor=r1.eyJ2IjoxLCJzb3J0IjoibGlrZXMiLCJzbmFwc2hvdCI6ImU1MGFlNzAyLTNjY2YtNTNmOS05Yjk5LTUyNmY5YTE2NjhkMCIsIm9mZnNldCI6MjAsImV4cGlyZXMiOjE3OTAzNDg5NDB9.r3k_fxMShZaXFFP2DrLXlgbIx7pQqJsPAlDKWcE8Ahg"
+2026/09/25 22:54:42 redis circuit open; using bounded fallback
+[GIN] 2026/09/25 - 22:54:42 | 200 |     14.6277ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&cursor=r1.eyJ2IjoxLCJzb3J0IjoibGlrZXMiLCJzbmFwc2hvdCI6ImU1MGFlNzAyLTNjY2YtNTNmOS05Yjk5LTUyNmY5YTE2NjhkMCIsIm9mZnNldCI6NDAsImV4cGlyZXMiOjE3OTAzNDg5NDB9.BQyeRW-MArFj8lT9fA-jcIfiG40nGWkPW_JJez6Dp18"
+2026/09/25 22:54:44 redis circuit recovered
+[GIN] 2026/09/25 - 22:54:44 | 200 |      22.622ms |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&cursor=r1.eyJ2IjoxLCJzb3J0IjoibGlrZXMiLCJzbmFwc2hvdCI6ImU1MGFlNzAyLTNjY2YtNTNmOS05Yjk5LTUyNmY5YTE2NjhkMCIsIm9mZnNldCI6MjAsImV4cGlyZXMiOjE3OTAzNDg5NDB9.r3k_fxMShZaXFFP2DrLXlgbIx7pQqJsPAlDKWcE8Ahg"
+[GIN] 2026/09/25 - 22:54:44 | 410 |            0s |       192.0.2.1 | GET      "/api/v1/videos?sort=likes&cursor=r1.eyJ2IjoxLCJzb3J0IjoibGlrZXMiLCJzbmFwc2hvdCI6ImU1MGFlNzAyLTNjY2YtNTNmOS05Yjk5LTUyNmY5YTE2NjhkMCIsIm9mZnNldCI6MjAsImV4cGlyZXMiOjE3OTAzNDgwODN9.tQgAkqEkZLa72rnCLSCOKP19_122TC4bn2mDWRA1Fsg"
+2026/09/25 22:54:44 redis circuit open; using bounded fallback
+--- PASS: TestSnapshotPagingSurvivesChangesAndRedisLoss (2.65s)
+=== RUN   TestCacheStampedeNegativeLeaseAndStaleFallback
+    recovery_test.go:319: 100 concurrent requests across 2 App instances: 1 detail database load
+--- PASS: TestCacheStampedeNegativeLeaseAndStaleFallback (0.49s)
+=== RUN   TestRedisOutagePreservesNotificationsAndRateLimits
+2026/09/25 22:54:45 redis circuit open; using bounded fallback
+2026/09/25 22:54:47 redis circuit recovered
+--- PASS: TestRedisOutagePreservesNotificationsAndRateLimits (2.83s)
+=== RUN   TestWorkerReconnectDrainsOutbox
+2026/09/25 22:54:49 broker session unavailable; retrying in 1.2s
+    recovery_test.go:485: worker reconnected and consumed the event persisted during broker outage
+--- PASS: TestWorkerReconnectDrainsOutbox (2.90s)
+=== RUN   TestNotificationStreamRefreshesWithoutRedis
+--- PASS: TestNotificationStreamRefreshesWithoutRedis (20.43s)
+=== RUN   TestFlightCancellationAndCoalescing
+--- PASS: TestFlightCancellationAndCoalescing (0.00s)
+=== RUN   TestFlightCapacityAndCacheFence
+--- PASS: TestFlightCapacityAndCacheFence (0.01s)
+=== RUN   TestRedisCircuitHalfOpenRecovery
+2026/09/25 22:55:10 redis circuit open; using bounded fallback
+2026/09/25 22:55:10 redis circuit recovered
+--- PASS: TestRedisCircuitHalfOpenRecovery (0.00s)
+=== RUN   TestLocalLimitBudgetAndBound
+--- PASS: TestLocalLimitBudgetAndBound (0.07s)
+=== RUN   TestRankCursorIntegrity
+--- PASS: TestRankCursorIntegrity (0.00s)
+PASS
+ok  	github.com/ZoeySigel/owlet-video/backend	62.713s
+?   	github.com/ZoeySigel/owlet-video/backend/tools/capacity	[no test files]

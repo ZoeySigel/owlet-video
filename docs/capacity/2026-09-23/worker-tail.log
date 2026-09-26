@@ -1,0 +1,336 @@
+worker-1  | 2026/09/23 12:07:44 worker pprof listening on 127.0.0.1:6061
+worker-1  | 
+worker-1  | 2026/09/23 12:07:44 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.858ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'ad6598cf-3f75-52a2-84af-aeff3dc76021' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:07:48 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:07:48 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3599.589ms] [34;1m[rows:181203][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:07:44.417' AND created_at <= '2026-09-23 12:07:44.417'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:07:44.417' AND created_at <= '2026-09-23 12:07:44.417'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:07:48 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.709ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '0f086afb-2c10-52d0-90cc-22ae380e6df3' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:08:48 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.049ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'a1994513-c0af-5881-8100-e7bb006029bf' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:08:51 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3605.999ms] [34;1m[rows:115168][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:08:48.064' AND created_at <= '2026-09-23 12:08:48.064'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:08:48.064' AND created_at <= '2026-09-23 12:08:48.064'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 2026/09/23 12:08:51 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:08:51 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.854ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'c08f9f06-1e4a-524a-aad9-27602699f39f' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:09:51 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.050ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '5776edf8-8028-5c05-924f-5527aeabc51b' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:09:55 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:09:55 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3618.718ms] [34;1m[rows:280577][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:09:51.731' AND created_at <= '2026-09-23 12:09:51.731'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:09:51.731' AND created_at <= '2026-09-23 12:09:51.731'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:09:55 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.852ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '32b733d1-06c9-5698-a24d-e8a7fa34c013' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:10:55 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.062ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '373468c1-4521-5ab9-bb1c-954fdd1797e2' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:10:59 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 2026/09/23 12:10:59 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3603.214ms] [34;1m[rows:329540][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:10:55.395' AND created_at <= '2026-09-23 12:10:55.395'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:10:55.395' AND created_at <= '2026-09-23 12:10:55.395'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:10:59 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.350ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'b93b83d1-9caf-5aa8-a2ef-510c25d09dc4' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:11:59 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.943ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'f0bba233-aa04-58d6-a485-e8c045c124d6' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:12:02 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3605.581ms] [34;1m[rows:274273][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:11:59.067' AND created_at <= '2026-09-23 12:11:59.067'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:11:59.067' AND created_at <= '2026-09-23 12:11:59.067'
+worker-1  | 2026/09/23 12:12:02 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:12:02 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[2.074ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '5c9f5ea0-87f3-58be-b7f1-4d25f4c1bdd3' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:13:02 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.947ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '4ccc40d8-5946-5bba-a8ea-dcc84837404e' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:13:06 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:13:06 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3599.688ms] [34;1m[rows:-][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:13:02.71' AND created_at <= '2026-09-23 12:13:02.71'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:13:02.71' AND created_at <= '2026-09-23 12:13:02.71'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:13:06 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.884ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'f9b74344-4f32-542c-8de6-7c10749c7a1c' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:14:06 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.913ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '6b77ba95-afa7-5463-bcc5-1ed72edcef04' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:14:09 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:14:09 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3608.404ms] [34;1m[rows:247167][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:14:06.366' AND created_at <= '2026-09-23 12:14:06.366'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:14:06.366' AND created_at <= '2026-09-23 12:14:06.366'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:15:09 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.278ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '92fb3733-2990-59d0-a1d7-368a36bc0579' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:15:13 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | 2026/09/23 12:15:13 ranking refresh failed (hot): context deadline exceeded
+worker-1  | [0m[33m[3598.719ms] [34;1m[rows:-][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:15:09.987' AND created_at <= '2026-09-23 12:15:09.987'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:15:09.987' AND created_at <= '2026-09-23 12:15:09.987'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:15:13 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.863ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'd76dd080-0366-5e2d-ac6f-c969019a4a0e' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:16:13 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.782ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'aca8dc32-5ad9-51b9-a53b-00797fb2f0b2' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:16:17 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3599.009ms] [34;1m[rows:-][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:16:13.623' AND created_at <= '2026-09-23 12:16:13.623'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:16:13.623' AND created_at <= '2026-09-23 12:16:13.623'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 2026/09/23 12:16:17 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:16:17 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[25.796ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'ec6da8ed-4c74-55a3-b484-29932fb43854' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:17:17 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.998ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '163c0966-7e27-5db2-9aeb-6952f0a508b8' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:17:21 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:17:21 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3598.902ms] [34;1m[rows:-][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:17:17.444' AND created_at <= '2026-09-23 12:17:17.444'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:17:17.444' AND created_at <= '2026-09-23 12:17:17.444'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:17:21 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[3.203ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '93b3aa92-8904-5300-b1e6-efa68d42d740' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:18:21 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.199ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '772ffdb9-c31f-55dc-8e47-b9eacb6aa647' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:18:24 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | 2026/09/23 12:18:24 ranking refresh failed (hot): context deadline exceeded
+worker-1  | [0m[33m[3598.380ms] [34;1m[rows:-][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:18:21.239' AND created_at <= '2026-09-23 12:18:21.239'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:18:21.239' AND created_at <= '2026-09-23 12:18:21.239'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:18:24 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.024ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '33d005a8-1fcb-5bf8-98b5-66111efbb2ee' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:19:24 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.875ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'b6dccad9-d89f-5b0b-a6ad-fb842c8eb823' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:19:28 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:19:28 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3606.367ms] [34;1m[rows:57610][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:19:24.897' AND created_at <= '2026-09-23 12:19:24.897'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:19:24.897' AND created_at <= '2026-09-23 12:19:24.897'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:19:28 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.394ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'c60f2c13-969e-5ece-b8ec-fc6658c38d40' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:20:28 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.210ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '2b313cb3-d8d2-57c2-8fb7-aa040ea848ba' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:20:32 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:20:32 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3612.818ms] [34;1m[rows:185633][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:20:28.544' AND created_at <= '2026-09-23 12:20:28.544'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:20:28.544' AND created_at <= '2026-09-23 12:20:28.544'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:20:32 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.676ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '4acf1efb-6743-5d3d-8f0d-50008847cc66' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:21:32 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.803ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '953fcbdf-c6d9-509c-9c16-0156a4fbc40f' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:21:35 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:21:35 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3604.856ms] [34;1m[rows:312162][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:21:32.18' AND created_at <= '2026-09-23 12:21:32.18'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:21:32.18' AND created_at <= '2026-09-23 12:21:32.18'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:21:35 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.163ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '7580cee4-7ffa-575e-807a-bb69ee950ed3' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:22:35 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.909ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'fefd5ebb-482b-5ef3-b5df-c6f6c6dcfedf' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:22:39 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:22:39 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3612.009ms] [34;1m[rows:125011][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:22:35.814' AND created_at <= '2026-09-23 12:22:35.814'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:22:35.814' AND created_at <= '2026-09-23 12:22:35.814'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:22:39 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.637ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '3997c389-5f7b-58ef-b8ed-22336e226d94' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:23:39 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.900ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '3f750d2b-4a30-552d-91bd-4c69c630a4ab' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:23:43 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:23:43 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3624.595ms] [34;1m[rows:351233][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:23:39.46' AND created_at <= '2026-09-23 12:23:39.46'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:23:39.46' AND created_at <= '2026-09-23 12:23:39.46'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:23:43 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.794ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '54a11d15-f31f-5147-95e5-08941f0e9072' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:24:43 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.852ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '51c2a1ee-155d-5347-baad-455b753d4b01' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:24:46 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:24:46 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3611.053ms] [34;1m[rows:386879][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:24:43.12' AND created_at <= '2026-09-23 12:24:43.12'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:24:43.12' AND created_at <= '2026-09-23 12:24:43.12'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:25:46 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.940ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '2420d4bf-77c1-53ea-ad29-2cd98f4bcb6c' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:25:50 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:25:50 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3599.718ms] [34;1m[rows:255615][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:25:46.752' AND created_at <= '2026-09-23 12:25:46.752'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:25:46.752' AND created_at <= '2026-09-23 12:25:46.752'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:25:50 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.949ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'fa056e89-bdfa-591c-bb4d-2a25b95b46ca' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:26:50 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.070ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'c5b77d00-4c19-5b10-b48a-7c572dd332ad' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:26:53 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3603.747ms] [34;1m[rows:288333][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:26:50.382' AND created_at <= '2026-09-23 12:26:50.382'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:26:50.382' AND created_at <= '2026-09-23 12:26:50.382'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 2026/09/23 12:26:53 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:26:53 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.714ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'ef1ac84b-c3dd-5491-85fa-6fb3751a3d1e' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:27:54 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.105ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '254b1392-e41a-5b6c-849b-3b6f50770b44' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:27:57 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:27:57 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3613.550ms] [34;1m[rows:259192][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:27:54.01' AND created_at <= '2026-09-23 12:27:54.01'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:27:54.01' AND created_at <= '2026-09-23 12:27:54.01'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:27:57 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[2.425ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '67c19f5f-cf0b-563a-8edc-cb5bcbd457bd' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:28:57 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.796ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '67ea69ce-6b47-5005-bf73-81e6601e79b4' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:29:01 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:29:01 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3607.457ms] [34;1m[rows:300991][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:28:57.65' AND created_at <= '2026-09-23 12:28:57.65'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:28:57.65' AND created_at <= '2026-09-23 12:28:57.65'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:29:01 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.637ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '9b3e3157-47ec-55b5-9643-b1a0c3dfd486' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:30:01 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.063ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '79ab0646-a05e-53a9-ab59-263097517b61' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:30:04 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:30:04 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3606.018ms] [34;1m[rows:191452][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:30:01.285' AND created_at <= '2026-09-23 12:30:01.285'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:30:01.285' AND created_at <= '2026-09-23 12:30:01.285'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:30:04 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.952ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '0212c00d-c450-597d-93a2-3411768c758a' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:31:04 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.791ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '29848187-f00c-5a91-a392-5ff2e6ac2a6c' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:31:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3611.029ms] [34;1m[rows:333724][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:31:04.92' AND created_at <= '2026-09-23 12:31:04.92'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:31:04.92' AND created_at <= '2026-09-23 12:31:04.92'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 2026/09/23 12:31:08 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:31:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.825ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'dcdbfe74-2520-5350-be7c-9bd180f77980' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:32:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.784ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'b0edfa36-2e7e-525d-aafc-89199c431b31' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:32:12 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:32:12 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3608.294ms] [34;1m[rows:203069][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:32:08.559' AND created_at <= '2026-09-23 12:32:08.559'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:32:08.559' AND created_at <= '2026-09-23 12:32:08.559'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:32:12 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.804ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '61c07886-64e3-584d-a78b-89a7f5140023' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:33:12 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.822ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '5685e2b0-2ebc-555a-9d6c-740b340980b7' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:33:15 ranking refresh failed (hot): context deadline exceeded; context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:33:15 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded; context deadline exceeded
+worker-1  | [0m[33m[3612.047ms] [34;1m[rows:336366][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:33:12.195' AND created_at <= '2026-09-23 12:33:12.195'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:33:12.195' AND created_at <= '2026-09-23 12:33:12.195'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:33:15 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.881ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '6998dc2a-25d1-52d6-98d7-d5ced9d4ea43' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/23 12:34:05 [32mgithub.com/ZoeySigel/owlet-video/backend/worker.go:187 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[207.635ms] [33m[rows:1][35m UPDATE `outboxes` SET `published_at`='2026-09-23 12:34:04.843' WHERE id = 'f4775092-6847-4ea4-8c14-b12b2c79bed1' AND published_at IS NULL[0m
+worker-1  | 
+worker-1  | 2026/09/23 12:34:15 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.883ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'e45c68ce-6a73-57ec-be9b-31f2a2caebc8' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/23 12:34:19 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/23 12:34:19 [31;1mgithub.com/ZoeySigel/owlet-video/backend/hot_buckets.go:56 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3600.348ms] [34;1m[rows:340336][0m SELECT FLOOR(UNIX_TIMESTAMP(created_at)/60) AS minute,video_id,SUM(weight) AS score FROM (
+worker-1  |  SELECT video_id,created_at,3 AS weight FROM likes WHERE created_at > '2026-09-22 12:34:15.859' AND created_at <= '2026-09-23 12:34:15.859'
+worker-1  |  UNION ALL SELECT video_id,created_at,5 AS weight FROM comments WHERE created_at > '2026-09-22 12:34:15.859' AND created_at <= '2026-09-23 12:34:15.859'
+worker-1  |  ) events GROUP BY minute,video_id
+worker-1  | 
+worker-1  | 2026/09/23 12:34:19 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.908ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '76f469b0-5342-5747-af5b-6598eed133ab' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1

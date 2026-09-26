@@ -163,8 +163,43 @@ func (a *App) computeRanking(ctx context.Context, sort string, asOf time.Time) (
 func (a *App) latestRank(ctx context.Context, sort string) (FeedSnapshot, error) {
 	s := a.state()
 	now := time.Now().UTC()
+	s.rankMu.Lock()
+	cached, ok := s.ranks[sort]
+	// Keep serving an immutable, valid snapshot during the next refresh.
+	// Bound freshness independently of the longer cursor retention period.
+	usable := ok && now.Before(cached.ExpiresAt) && now.Before(cached.CreatedAt.Add(2*s.cfg.RankRefresh))
+	if usable && cached.ID != a.rankID(sort, now) && !s.rankRefreshing[sort] {
+		if s.rankRefreshing == nil {
+			s.rankRefreshing = make(map[string]bool)
+		}
+		s.rankRefreshing[sort] = true
+		go func() {
+			defer func() { s.rankMu.Lock(); delete(s.rankRefreshing, sort); s.rankMu.Unlock() }()
+			work, cancel := context.WithTimeout(context.Background(), s.cfg.DBTimeout+4*s.cfg.RedisTimeout)
+			defer cancel()
+			if _, err := a.rebuildRank(work, sort); err != nil {
+				log.Printf("background ranking refresh failed (%s): %v", sort, err)
+			}
+		}()
+	}
+	s.rankMu.Unlock()
+	if usable {
+		return cached, nil
+	}
+	return a.rebuildRank(ctx, sort)
+}
+
+func (a *App) rankID(sort string, now time.Time) string {
+	cfg := a.state().cfg
+	bucket := now.Truncate(cfg.RankRefresh)
+	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(fmt.Sprintf("owlet:rank:v1:%s:%s:%d:%d:%d", sort, cfg.HotWindow, cfg.RankLimit, cfg.RankRefresh, bucket.UnixNano()))).String()
+}
+
+func (a *App) rebuildRank(ctx context.Context, sort string) (FeedSnapshot, error) {
+	s := a.state()
+	now := time.Now().UTC()
 	bucket := now.Truncate(s.cfg.RankRefresh)
-	id := uuid.NewSHA1(uuid.NameSpaceOID, []byte(fmt.Sprintf("owlet:rank:v1:%s:%s:%d:%d:%d", sort, s.cfg.HotWindow, s.cfg.RankLimit, s.cfg.RankRefresh, bucket.UnixNano()))).String()
+	id := a.rankID(sort, now)
 	s.rankMu.Lock()
 	cached, ok := s.ranks[sort]
 	s.rankMu.Unlock()
@@ -181,7 +216,12 @@ func (a *App) latestRank(ctx context.Context, sort string) (FeedSnapshot, error)
 				return nil, e
 			}
 			defer release()
-			entries, e := a.computeRanking(work, sort, now)
+			var entries []rankEntry
+			if sort == "hot" {
+				entries, e = a.bucketRanking(work, now)
+			} else {
+				entries, e = a.computeRanking(work, sort, now)
+			}
 			if e != nil {
 				return nil, e
 			}
@@ -332,7 +372,7 @@ func (a *App) rankMaintenance(ctx context.Context) {
 			return
 		case <-timer.C:
 			for _, sort := range []string{"hot", "likes"} {
-				if s, err := a.latestRank(ctx, sort); err == nil {
+				if s, err := a.rebuildRank(ctx, sort); err == nil {
 					_ = a.cacheSnapshot(ctx, s)
 				} else if ctx.Err() == nil {
 					log.Printf("ranking refresh failed (%s): %v", sort, err)

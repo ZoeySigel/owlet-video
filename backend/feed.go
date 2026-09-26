@@ -7,30 +7,15 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (a *App) optionalUser(c *gin.Context) uint {
-	raw, err := c.Cookie("owlet_access")
-	if err != nil {
-		return 0
+	if id, ok := c.Get("userID"); ok {
+		return id.(uint)
 	}
-	claims, err := a.parseToken(raw, "access")
-	if err != nil {
-		return 0
-	}
-	id, err := strconv.ParseUint(claims.Subject, 10, 64)
-	if err != nil {
-		return 0
-	}
-	var n int64
-	a.db.Model(&Session{}).Where("id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > ?", claims.SessionID, id, time.Now()).Count(&n)
-	if n == 0 {
-		return 0
-	}
-	return uint(id)
+	return 0
 }
 
 func decodeCursor(raw string) (float64, uint, error) {
@@ -68,6 +53,10 @@ func (a *App) feed(c *gin.Context) {
 		errorJSON(c, 400, "invalid_sort")
 		return
 	}
+	if sort == "likes" && c.Query("pagination") == "keyset" {
+		a.likesKeyset(c)
+		return
+	}
 	if sort == "hot" || sort == "likes" {
 		a.rankedFeed(c, sort)
 		return
@@ -79,28 +68,17 @@ func (a *App) feed(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), a.state().cfg.DBTimeout)
 	defer cancel()
-	q := a.db.WithContext(ctx).Preload("User").Model(&Video{})
-	switch sort {
-	case "latest":
-		if id > 0 {
-			q = q.Where("id < ?", id)
-		}
-		q = q.Order("id DESC")
-	case "following":
-		uid := a.optionalUser(c)
+	uid := uint(0)
+	if sort == "following" {
+		uid = a.optionalUser(c)
 		if uid == 0 {
 			errorJSON(c, 401, "login_required")
 			return
 		}
-		q = q.Where("user_id IN (?)", a.db.Model(&Follow{}).Select("following_id").Where("follower_id = ?", uid))
-		if id > 0 {
-			q = q.Where("id < ?", id)
-		}
-		q = q.Order("id DESC")
 	}
-	var videos []Video
-	if q.Limit(21).Find(&videos).Error != nil {
-		errorJSON(c, 500, "feed_failed")
+	videos, err := a.timeline(ctx, uid, id)
+	if err != nil {
+		errorJSON(c, 503, "feed_failed")
 		return
 	}
 	next := ""

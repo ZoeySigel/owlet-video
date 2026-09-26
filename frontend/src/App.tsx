@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   api,
+  cachedPublic,
+  readResource,
   json,
   type Comment,
   type Feed,
@@ -86,11 +88,13 @@ export default function App() {
   const [route, setRoute] = useState<Route>({ view: "home", sort: "latest" });
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const [routeReady, setRouteReady] = useState(false);
   const [noticeCount, setNoticeCount] = useState(0);
   const [toast, setToast] = useState("");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     setRoute(parseRoute());
+    setRouteReady(true);
     const onPop = () => setRoute(parseRoute());
     window.addEventListener("popstate", onPop);
     return () => {
@@ -312,20 +316,20 @@ export default function App() {
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className="app-main">
-        {!ready ? (
+        {!routeReady || (!ready && !["home", "watch", "profile", "tag"].includes(route.view)) || (!ready && route.view === "home" && route.sort === "following") ? (
           <Loading />
         ) : (
           <>
             {route.view === "home" && (
               <Home
-                key={`${route.sort}-${user?.id || "guest"}`}
+                key={`${route.sort}-${route.sort === "following" ? user?.id || "guest" : "public"}`}
                 sort={route.sort || "latest"}
                 {...props}
               />
             )}
             {route.view === "watch" && (
               <Watch
-                key={`${route.id}-${user?.id || "guest"}`}
+                key={route.id}
                 id={route.id}
                 {...props}
               />
@@ -389,22 +393,24 @@ function LoginRequired({ navigate }: Pick<Common, "navigate">) {
 }
 
 function Home({ sort, navigate, user }: Common & { sort: Sort }) {
-  const [items, setItems] = useState<Video[]>([]);
-  const [cursor, setCursor] = useState("");
-  const [loading, setLoading] = useState(true);
+  const cached = cachedPublic<Feed>(`/videos?sort=${sort}`);
+  const [items, setItems] = useState<Video[]>(cached?.items || []);
+  const [cursor, setCursor] = useState(cached?.nextCursor || "");
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState("");
   const [expired, setExpired] = useState(false);
   const active = useRef(true);
   const busy = useRef(false);
   const load = useCallback(
-    async (next = "") => {
+    async (next = "", fresh = false) => {
       if (busy.current) return;
       busy.current = true;
       setLoading(true);
       setError("");
       try {
-        const r = await api<Feed>(
+        const r = await readResource<Feed>(
           `/videos?sort=${sort}${next ? "&cursor=" + encodeURIComponent(next) : ""}`,
+          fresh,
         );
         if (active.current) {
           setItems((old) =>
@@ -433,14 +439,15 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
     },
     [sort],
   );
+  const canLoad = sort !== "following" || !!user;
   useEffect(() => {
     active.current = true;
-    if (sort !== "following" || user) void load();
+    if (canLoad) void load();
     else setLoading(false);
     return () => {
       active.current = false;
     };
-  }, [load, sort, user]);
+  }, [load, canLoad]);
   return (
     <section className="feed-section">
       <PageHeading
@@ -481,7 +488,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
           {error && (
             <ErrorState
               message={error}
-              retry={() => void load(expired ? "" : items.length ? cursor : "")}
+              retry={() => void load(expired ? "" : items.length ? cursor : "", expired)}
             />
           )}{" "}
           {loading && !items.length ? (
@@ -497,7 +504,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
                   className="load-more"
                   variant="secondary"
                   disabled={loading}
-                  onClick={() => void load(expired ? "" : cursor)}
+                  onClick={() => void load(expired ? "" : cursor, expired)}
                 >
                   {loading ? "正在加载…" : "加载更多"}
                 </Button>
@@ -1447,7 +1454,9 @@ function Settings({
                 });
                 setOld("");
                 setNew("");
-                alert("密码已更新");
+                await refreshUser();
+                navigate("account");
+                alert("密码已更新，请重新登录");
               });
             }}
           >

@@ -1,0 +1,84 @@
+name: owlet-capacity
+services:
+  mysql:
+    image: mysql:8.4
+    cpus: 2
+    mem_limit: 1536m
+    environment:
+      MYSQL_DATABASE: owlet_capacity
+      MYSQL_USER: capacity
+      MYSQL_PASSWORD: capacity-local-only
+      MYSQL_ROOT_PASSWORD: capacity-root-local-only
+    command: ["--innodb-buffer-pool-size=768M", "--max-connections=100"]
+    volumes: ["capacity_mysql:/var/lib/mysql"]
+    ports: ["127.0.0.1:23316:3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysql --protocol=TCP -h 127.0.0.1 -ucapacity -pcapacity-local-only -D owlet_capacity -e 'SELECT 1' >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  redis:
+    image: redis:7-alpine
+    cpus: 0.5
+    mem_limit: 256m
+    command: ["redis-server", "--maxmemory", "192mb", "--maxmemory-policy", "allkeys-lru"]
+    ports: ["127.0.0.1:26389:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    cpus: 1
+    mem_limit: 768m
+    environment:
+      RABBITMQ_DEFAULT_USER: capacity
+      RABBITMQ_DEFAULT_PASS: capacity-local-only
+    ports: ["127.0.0.1:25682:5672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  api:
+    image: alpine:3.21
+    cpus: 2
+    mem_limit: 512m
+    entrypoint: ["/app/owlet-video", "api"]
+    environment: &app-env
+      ADDR: 0.0.0.0:8080
+      MYSQL_DSN: capacity:capacity-local-only@tcp(mysql:3306)/owlet_capacity?parseTime=True&charset=utf8mb4&loc=UTC
+      REDIS_ADDR: redis:6379
+      RABBITMQ_URL: amqp://capacity:capacity-local-only@rabbitmq:5672/
+      JWT_SECRET: capacity-test-secret-never-use-in-production-2026
+      DATA_DIR: /tmp/owlet-capacity
+      GOMAXPROCS: '2'
+      GIN_MODE: release
+      PPROF_ENABLED: 'true'
+    volumes: ["./.tools/capacity/owlet-video:/app/owlet-video:ro"]
+    ports: ["127.0.0.1:28080:8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      mysql: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    logging: {driver: json-file, options: {max-size: '10m', max-file: '2'}}
+  worker:
+    image: alpine:3.21
+    cpus: 1
+    mem_limit: 512m
+    entrypoint: ["/app/owlet-video", "worker"]
+    environment:
+      <<: *app-env
+      GOMAXPROCS: '1'
+    volumes: ["./.tools/capacity/owlet-video:/app/owlet-video:ro"]
+    depends_on:
+      api: {condition: service_healthy}
+    logging: {driver: json-file, options: {max-size: '10m', max-file: '2'}}
+volumes:
+  capacity_mysql:

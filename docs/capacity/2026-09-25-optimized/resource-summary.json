@@ -1,0 +1,442 @@
+[
+  {
+    "stage": "final-async-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 27,
+    "cpuPercentMean": 52.77777777777778,
+    "cpuPercentMax": 73.52,
+    "memoryPercentMax": 5.16
+  },
+  {
+    "stage": "final-async-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 27,
+    "cpuPercentMean": 74.27407407407408,
+    "cpuPercentMax": 82.07,
+    "memoryPercentMax": 2.96
+  },
+  {
+    "stage": "final-async-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 27,
+    "cpuPercentMean": 136.72962962962964,
+    "cpuPercentMax": 169.38,
+    "memoryPercentMax": 74.63
+  },
+  {
+    "stage": "final-async-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 27,
+    "cpuPercentMean": 14.96037037037037,
+    "cpuPercentMax": 23.29,
+    "memoryPercentMax": 10.84
+  },
+  {
+    "stage": "final-async-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 27,
+    "cpuPercentMean": 71.8237037037037,
+    "cpuPercentMax": 104.38,
+    "memoryPercentMax": 23.51
+  },
+  {
+    "stage": "final-hot-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 26,
+    "cpuPercentMean": 54.75615384615384,
+    "cpuPercentMax": 70.24,
+    "memoryPercentMax": 3.52
+  },
+  {
+    "stage": "final-hot-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 26,
+    "cpuPercentMean": 0.7507692307692307,
+    "cpuPercentMax": 1.32,
+    "memoryPercentMax": 2.41
+  },
+  {
+    "stage": "final-hot-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 26,
+    "cpuPercentMean": 16.470769230769232,
+    "cpuPercentMax": 47.1,
+    "memoryPercentMax": 58.38
+  },
+  {
+    "stage": "final-hot-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 26,
+    "cpuPercentMean": 3.5026923076923078,
+    "cpuPercentMax": 7.97,
+    "memoryPercentMax": 6.11
+  },
+  {
+    "stage": "final-hot-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 26,
+    "cpuPercentMean": 87.64461538461538,
+    "cpuPercentMax": 103.04,
+    "memoryPercentMax": 22.2
+  },
+  {
+    "stage": "final-write-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 26,
+    "cpuPercentMean": 119.56307692307692,
+    "cpuPercentMax": 137.53,
+    "memoryPercentMax": 6.89
+  },
+  {
+    "stage": "final-write-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 26,
+    "cpuPercentMean": 51.35884615384615,
+    "cpuPercentMax": 80.35,
+    "memoryPercentMax": 2.81
+  },
+  {
+    "stage": "final-write-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 26,
+    "cpuPercentMean": 196.24115384615385,
+    "cpuPercentMax": 210.6,
+    "memoryPercentMax": 64.24
+  },
+  {
+    "stage": "final-write-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 26,
+    "cpuPercentMean": 16.101153846153846,
+    "cpuPercentMax": 22.92,
+    "memoryPercentMax": 8.77
+  },
+  {
+    "stage": "final-write-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 26,
+    "cpuPercentMean": 58.058846153846154,
+    "cpuPercentMax": 104.93,
+    "memoryPercentMax": 23.18
+  },
+  {
+    "stage": "optimized-hot-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 13,
+    "cpuPercentMean": 57.05230769230769,
+    "cpuPercentMax": 74.47,
+    "memoryPercentMax": 3.49
+  },
+  {
+    "stage": "optimized-hot-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 13,
+    "cpuPercentMean": 0.713076923076923,
+    "cpuPercentMax": 0.79,
+    "memoryPercentMax": 2.28
+  },
+  {
+    "stage": "optimized-hot-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 13,
+    "cpuPercentMean": 20.08153846153846,
+    "cpuPercentMax": 67.42,
+    "memoryPercentMax": 55.99
+  },
+  {
+    "stage": "optimized-hot-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 13,
+    "cpuPercentMean": 4.504615384615384,
+    "cpuPercentMax": 8.23,
+    "memoryPercentMax": 3.15
+  },
+  {
+    "stage": "optimized-hot-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 13,
+    "cpuPercentMean": 82.84153846153846,
+    "cpuPercentMax": 101.6,
+    "memoryPercentMax": 22.02
+  },
+  {
+    "stage": "optimized-hot-20",
+    "container": "owlet-capacity-api-1",
+    "samples": 13,
+    "cpuPercentMean": 13.093846153846153,
+    "cpuPercentMax": 16.84,
+    "memoryPercentMax": 2.52
+  },
+  {
+    "stage": "optimized-hot-20",
+    "container": "owlet-capacity-worker-1",
+    "samples": 13,
+    "cpuPercentMean": 0.7523076923076923,
+    "cpuPercentMax": 0.93,
+    "memoryPercentMax": 2.3
+  },
+  {
+    "stage": "optimized-hot-20",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 13,
+    "cpuPercentMean": 7.608461538461539,
+    "cpuPercentMax": 11.85,
+    "memoryPercentMax": 51.05
+  },
+  {
+    "stage": "optimized-hot-20",
+    "container": "owlet-capacity-redis-1",
+    "samples": 13,
+    "cpuPercentMean": 2.246153846153846,
+    "cpuPercentMax": 5.49,
+    "memoryPercentMax": 4.38
+  },
+  {
+    "stage": "optimized-hot-20",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 13,
+    "cpuPercentMean": 66.37461538461538,
+    "cpuPercentMax": 103.63,
+    "memoryPercentMax": 22.02
+  },
+  {
+    "stage": "optimized-write-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 13,
+    "cpuPercentMean": 139.43461538461537,
+    "cpuPercentMax": 152.79,
+    "memoryPercentMax": 5.76
+  },
+  {
+    "stage": "optimized-write-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 13,
+    "cpuPercentMean": 38.71846153846154,
+    "cpuPercentMax": 47.58,
+    "memoryPercentMax": 2.79
+  },
+  {
+    "stage": "optimized-write-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 13,
+    "cpuPercentMean": 199.20307692307694,
+    "cpuPercentMax": 206.81,
+    "memoryPercentMax": 57.17
+  },
+  {
+    "stage": "optimized-write-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 13,
+    "cpuPercentMean": 15.14,
+    "cpuPercentMax": 19.94,
+    "memoryPercentMax": 6.42
+  },
+  {
+    "stage": "optimized-write-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 13,
+    "cpuPercentMean": 64.33538461538461,
+    "cpuPercentMax": 103.54,
+    "memoryPercentMax": 22.38
+  },
+  {
+    "stage": "optimized-write-20",
+    "container": "owlet-capacity-api-1",
+    "samples": 13,
+    "cpuPercentMean": 11.523846153846154,
+    "cpuPercentMax": 17.81,
+    "memoryPercentMax": 2.97
+  },
+  {
+    "stage": "optimized-write-20",
+    "container": "owlet-capacity-worker-1",
+    "samples": 13,
+    "cpuPercentMean": 21.50307692307692,
+    "cpuPercentMax": 24.6,
+    "memoryPercentMax": 2.64
+  },
+  {
+    "stage": "optimized-write-20",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 13,
+    "cpuPercentMean": 35.11769230769231,
+    "cpuPercentMax": 40.79,
+    "memoryPercentMax": 56.67
+  },
+  {
+    "stage": "optimized-write-20",
+    "container": "owlet-capacity-redis-1",
+    "samples": 13,
+    "cpuPercentMean": 5.131538461538462,
+    "cpuPercentMax": 8.96,
+    "memoryPercentMax": 3.89
+  },
+  {
+    "stage": "optimized-write-20",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 13,
+    "cpuPercentMean": 26.433846153846154,
+    "cpuPercentMax": 102.01,
+    "memoryPercentMax": 21.77
+  },
+  {
+    "stage": "refined-async-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 27,
+    "cpuPercentMean": 50.17259259259259,
+    "cpuPercentMax": 69.84,
+    "memoryPercentMax": 4.18
+  },
+  {
+    "stage": "refined-async-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 27,
+    "cpuPercentMean": 73.41074074074074,
+    "cpuPercentMax": 82.58,
+    "memoryPercentMax": 3.06
+  },
+  {
+    "stage": "refined-async-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 27,
+    "cpuPercentMean": 132.97074074074075,
+    "cpuPercentMax": 177.64,
+    "memoryPercentMax": 89.01
+  },
+  {
+    "stage": "refined-async-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 27,
+    "cpuPercentMean": 14.601851851851851,
+    "cpuPercentMax": 33.45,
+    "memoryPercentMax": 15.76
+  },
+  {
+    "stage": "refined-async-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 27,
+    "cpuPercentMean": 63.89925925925926,
+    "cpuPercentMax": 104.41,
+    "memoryPercentMax": 23.65
+  },
+  {
+    "stage": "refined-hot-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 13,
+    "cpuPercentMean": 51.70384615384615,
+    "cpuPercentMax": 62.56,
+    "memoryPercentMax": 3.92
+  },
+  {
+    "stage": "refined-hot-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 13,
+    "cpuPercentMean": 0.9230769230769231,
+    "cpuPercentMax": 3.47,
+    "memoryPercentMax": 3.03
+  },
+  {
+    "stage": "refined-hot-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 13,
+    "cpuPercentMean": 17.756153846153847,
+    "cpuPercentMax": 52.39,
+    "memoryPercentMax": 91.48
+  },
+  {
+    "stage": "refined-hot-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 13,
+    "cpuPercentMean": 3.4553846153846153,
+    "cpuPercentMax": 7.31,
+    "memoryPercentMax": 17.54
+  },
+  {
+    "stage": "refined-hot-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 13,
+    "cpuPercentMean": 0.5561538461538461,
+    "cpuPercentMax": 1.67,
+    "memoryPercentMax": 12.86
+  },
+  {
+    "stage": "refined-write-100",
+    "container": "owlet-capacity-api-1",
+    "samples": 26,
+    "cpuPercentMean": 96.17692307692307,
+    "cpuPercentMax": 127.12,
+    "memoryPercentMax": 5.56
+  },
+  {
+    "stage": "refined-write-100",
+    "container": "owlet-capacity-worker-1",
+    "samples": 26,
+    "cpuPercentMean": 71.86192307692308,
+    "cpuPercentMax": 78.17,
+    "memoryPercentMax": 2.92
+  },
+  {
+    "stage": "refined-write-100",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 26,
+    "cpuPercentMean": 165.19230769230768,
+    "cpuPercentMax": 201.68,
+    "memoryPercentMax": 81.52
+  },
+  {
+    "stage": "refined-write-100",
+    "container": "owlet-capacity-redis-1",
+    "samples": 26,
+    "cpuPercentMean": 17.385384615384616,
+    "cpuPercentMax": 30.95,
+    "memoryPercentMax": 14.51
+  },
+  {
+    "stage": "refined-write-100",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 26,
+    "cpuPercentMean": 68.48769230769231,
+    "cpuPercentMax": 104.82,
+    "memoryPercentMax": 22.9
+  },
+  {
+    "stage": "stable-async-50",
+    "container": "owlet-capacity-api-1",
+    "samples": 26,
+    "cpuPercentMean": 26.85923076923077,
+    "cpuPercentMax": 33.5,
+    "memoryPercentMax": 3.57
+  },
+  {
+    "stage": "stable-async-50",
+    "container": "owlet-capacity-worker-1",
+    "samples": 26,
+    "cpuPercentMean": 41.76423076923077,
+    "cpuPercentMax": 53.49,
+    "memoryPercentMax": 3.0
+  },
+  {
+    "stage": "stable-async-50",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 26,
+    "cpuPercentMean": 79.46423076923077,
+    "cpuPercentMax": 102.15,
+    "memoryPercentMax": 91.5
+  },
+  {
+    "stage": "stable-async-50",
+    "container": "owlet-capacity-redis-1",
+    "samples": 26,
+    "cpuPercentMean": 9.646923076923077,
+    "cpuPercentMax": 37.03,
+    "memoryPercentMax": 16.73
+  },
+  {
+    "stage": "stable-async-50",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 26,
+    "cpuPercentMean": 56.136153846153846,
+    "cpuPercentMax": 101.96,
+    "memoryPercentMax": 22.69
+  }
+]

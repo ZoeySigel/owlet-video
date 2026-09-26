@@ -1,0 +1,26 @@
+File: owlet-video
+Build ID: b84ab6aacd207e1899c304e521eef264438d7882
+Type: cpu
+Time: 2026-09-23 20:12:14 CST
+Duration: 45s, Total samples = 40ms (0.089%)
+Showing nodes accounting for 40ms, 100% of 40ms total
+Showing top 18 nodes out of 38
+      flat  flat%   sum%        cum   cum%
+      20ms 50.00% 50.00%       20ms 50.00%  internal/runtime/syscall/linux.Syscall6
+      10ms 25.00% 75.00%       10ms 25.00%  gorm.io/gorm.(*DB).Order
+      10ms 25.00%   100%       10ms 25.00%  runtime.mallocgcSmallScanNoHeader
+         0     0%   100%       20ms 50.00%  database/sql.(*DB).QueryContext
+         0     0%   100%       20ms 50.00%  database/sql.(*DB).QueryContext.func1
+         0     0%   100%       20ms 50.00%  database/sql.(*DB).query
+         0     0%   100%       20ms 50.00%  database/sql.(*DB).queryDC
+         0     0%   100%       20ms 50.00%  database/sql.(*DB).queryDC.func2
+         0     0%   100%       20ms 50.00%  database/sql.(*DB).retry
+         0     0%   100%       20ms 50.00%  database/sql.ctxDriverPrepare
+         0     0%   100%       20ms 50.00%  database/sql.withLock
+         0     0%   100%       20ms 50.00%  github.com/go-sql-driver/mysql.(*mysqlConn).Prepare
+         0     0%   100%       20ms 50.00%  github.com/go-sql-driver/mysql.(*mysqlConn).PrepareContext
+         0     0%   100%       20ms 50.00%  github.com/go-sql-driver/mysql.(*mysqlConn).writeCommandPacketStr
+         0     0%   100%       20ms 50.00%  github.com/go-sql-driver/mysql.(*mysqlConn).writePacket
+         0     0%   100%       10ms 25.00%  github.com/go-sql-driver/mysql.connCheck
+         0     0%   100%       10ms 25.00%  github.com/go-sql-driver/mysql.connCheck.func1
+         0     0%   100%       20ms 50.00%  gorm.io/gorm.(*DB).Find

@@ -63,4 +63,5 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test:upload
+      - run: npm run test:navigation
       - run: npm run build

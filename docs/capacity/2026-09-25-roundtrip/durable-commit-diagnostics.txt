@@ -1,0 +1,9 @@
+EVENT_NAME	COUNT_WRITE	write_seconds	COUNT_MISC	misc_seconds
+wait/io/file/innodb/innodb_log_file	322162	23.15	68739	623.85
+wait/io/file/sql/binlog	49190	5.24	31992	606.64
+Variable_name	Value
+binlog_group_commit_sync_delay	0
+binlog_group_commit_sync_no_delay_count	0
+innodb_flush_log_at_trx_commit	1
+log_bin	ON
+sync_binlog	1

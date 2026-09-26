@@ -1,0 +1,4 @@
+PROGRESS elapsed=55s pendingOutbox=26 pendingCommands=3233 completed=94031 monitorError=""
+PROGRESS elapsed=115s pendingOutbox=16 pendingCommands=6840 completed=96400 monitorError=""
+PROGRESS elapsed=175s pendingOutbox=15 pendingCommands=10423 completed=98865 monitorError=""
+async target=100 sent=17998 success=17998 errors=0 dropped=2 p95=418.4ms p99=721.6ms drain=30.1s

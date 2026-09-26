@@ -98,11 +98,11 @@ func integrationApp(t *testing.T) *App {
 		t.Skip("TEST_MYSQL_DSN not set")
 	}
 	gin.SetMode(gin.TestMode)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{TranslateError: true, Logger: logger.Default.LogMode(logger.Silent)})
+	db, err := openDatabase(dsn, &gorm.Config{TranslateError: true, Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = db.AutoMigrate(&User{}, &Video{}, &Like{}, &Comment{}, &Follow{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}, &Session{}); err != nil {
+	if err = db.AutoMigrate(&InteractionCommand{}, &User{}, &Video{}, &Like{}, &Comment{}, &Follow{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}, &Session{}); err != nil {
 		t.Fatal(err)
 	}
 	sqlDB, _ := db.DB()
@@ -113,7 +113,9 @@ func integrationApp(t *testing.T) *App {
 	if err = r.Ping(context.Background()).Err(); err != nil {
 		t.Fatal(err)
 	}
-	return &App{cfg: Config{JWTSecret: "test-only-signing-secret-with-32-characters", RabbitURL: os.Getenv("TEST_RABBITMQ_URL"), RankLimit: 173}.defaults(), db: db, redis: r}
+	app := &App{cfg: Config{JWTSecret: "test-only-signing-secret-with-32-characters", RabbitURL: os.Getenv("TEST_RABBITMQ_URL"), RankLimit: 173}.defaults(), db: db, redis: r}
+	t.Cleanup(func() { app.state().publisher.close() })
+	return app
 }
 func testRedis(addr string) *redis.Client {
 	return redis.NewClient(&redis.Options{Addr: addr, Password: os.Getenv("TEST_REDIS_PASSWORD"), DialTimeout: 200 * time.Millisecond, ReadTimeout: 200 * time.Millisecond, WriteTimeout: 200 * time.Millisecond, PoolTimeout: 200 * time.Millisecond, ContextTimeoutEnabled: true, MaxRetries: -1})

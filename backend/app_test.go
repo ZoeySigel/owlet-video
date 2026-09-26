@@ -18,7 +18,6 @@ import (
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -56,11 +55,11 @@ func TestIntegrationFlow(t *testing.T) {
 		t.Skip("TEST_MYSQL_DSN not set")
 	}
 	gin.SetMode(gin.TestMode)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{TranslateError: true})
+	db, err := openDatabase(dsn, &gorm.Config{TranslateError: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
+	if err := db.AutoMigrate(&InteractionCommand{}, &User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
 		t.Fatal(err)
 	}
 	rdb := redis.NewClient(&redis.Options{Addr: env("TEST_REDIS_ADDR", "127.0.0.1:6379"), Password: os.Getenv("TEST_REDIS_PASSWORD")})
@@ -70,6 +69,7 @@ func TestIntegrationFlow(t *testing.T) {
 	}
 	cfg := Config{JWTSecret: strings.Repeat("x", 32), RabbitURL: os.Getenv("TEST_RABBITMQ_URL"), DataDir: t.TempDir(), MaxMediaBytes: 1 << 30}
 	a := &App{cfg: cfg, db: db, redis: rdb}
+	defer a.state().publisher.close()
 	router := a.router()
 	call := func(method, path string, body []byte, cookies []*http.Cookie, headers map[string]string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(method, path, bytes.NewReader(body))
@@ -112,6 +112,19 @@ func TestIntegrationFlow(t *testing.T) {
 	}
 	var init struct{ ID string }
 	_ = json.Unmarshal(w.Body.Bytes(), &init)
+	reused := call("POST", "/api/v1/uploads", initBody, authorCookies, nil)
+	var reusedID struct{ ID string }
+	_ = json.Unmarshal(reused.Body.Bytes(), &reusedID)
+	if reused.Code != 201 || reusedID.ID != init.ID {
+		t.Fatal("upload session not reused", reused.Body.String())
+	}
+	// A stale hash index must not constrain the subsequent database fallback.
+	rdb.Set(context.Background(), uploadHashKey(author.ID, hash), uuid.NewString(), time.Minute)
+	reused = call("POST", "/api/v1/uploads", initBody, authorCookies, nil)
+	_ = json.Unmarshal(reused.Body.Bytes(), &reusedID)
+	if reused.Code != 201 || reusedID.ID != init.ID {
+		t.Fatal("stale upload index prevented DB reuse", reused.Body.String())
+	}
 	w = call("PUT", "/api/v1/uploads/"+init.ID+"/chunks/0", videoBytes, authorCookies, map[string]string{"X-Chunk-MD5": hash})
 	if w.Code != 200 {
 		t.Fatalf("chunk %d: %s", w.Code, w.Body.String())
@@ -120,7 +133,7 @@ func TestIntegrationFlow(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatalf("complete %d: %s", w.Code, w.Body.String())
 	}
-	publish, _ := json.Marshal(map[string]string{"uploadId": init.ID, "title": "North wind", "description": "A note from #north"})
+	publish, _ := json.Marshal(map[string]string{"uploadId": init.ID, "title": "North wind #titleTag", "description": "A note from #north"})
 	w = call("POST", "/api/v1/videos", publish, authorCookies, nil)
 	if w.Code != 201 {
 		t.Fatalf("publish %d: %s", w.Code, w.Body.String())
@@ -129,6 +142,11 @@ func TestIntegrationFlow(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &video)
 	if video.ID == 0 || video.PlayURL == "" {
 		t.Fatal("video missing id/url")
+	}
+	var titleTagCount int64
+	db.Model(&VideoTag{}).Where("video_id = ? AND tag = ?", video.ID, "titletag").Count(&titleTagCount)
+	if titleTagCount != 1 {
+		t.Fatal("title tag not extracted")
 	}
 	w = call("GET", "/api/v1/videos?sort=latest", nil, nil, nil)
 	if w.Code != 200 || !strings.Contains(w.Body.String(), "North wind") {

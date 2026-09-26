@@ -131,14 +131,14 @@ func (a *App) runBrokerSession(ctx context.Context) error {
 	if err := ch.Confirm(false); err != nil {
 		return err
 	}
-	confirm := ch.NotifyPublish(make(chan amqp.Confirmation, 1))
+	confirm := ch.NotifyPublish(make(chan amqp.Confirmation, outboxBatchSize))
 	workCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	errCh := make(chan error, 3)
+	errCh := make(chan error, eventConsumers+1)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func() { defer wg.Done(); errCh <- a.publishOutbox(workCtx, ch, confirm) }()
-	for i := 0; i < 2; i++ {
+	go func() { defer wg.Done(); errCh <- a.publishOutbox(workCtx, conn, ch, confirm) }()
+	for i := 0; i < eventConsumers; i++ {
 		wg.Add(1)
 		go func() { defer wg.Done(); errCh <- a.consumeEvents(workCtx, conn) }()
 	}
@@ -156,39 +156,75 @@ func (a *App) runBrokerSession(ctx context.Context) error {
 	}
 }
 
-func (a *App) publishOutbox(ctx context.Context, ch *amqp.Channel, confirm <-chan amqp.Confirmation) error {
-	ticker := time.NewTicker(600 * time.Millisecond)
-	defer ticker.Stop()
+const outboxBatchSize = 128
+const eventConsumers = 4
+
+// Confirm the entire bounded batch before marking rows published. Uncertain
+// batches are retried; the consumers deduplicate by event and command IDs.
+func (a *App) publishOutbox(ctx context.Context, conn *amqp.Connection, ch *amqp.Channel, confirm <-chan amqp.Confirmation) error {
+	returned := ch.NotifyReturn(make(chan amqp.Return, outboxBatchSize))
 	for {
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return nil
-		case <-ticker.C:
 		}
 		var rows []Outbox
-		if err := a.db.WithContext(ctx).Where("published_at IS NULL").Order("created_at ASC").Limit(20).Find(&rows).Error; err != nil {
+		if err := a.db.WithContext(ctx).Where("published_at IS NULL").Order("created_at ASC, id ASC").Limit(outboxBatchSize).Find(&rows).Error; err != nil {
 			return err
 		}
-		for _, row := range rows {
-			if err := ch.PublishWithContext(ctx, "owlet.events", "events", true, false, amqp.Publishing{DeliveryMode: amqp.Persistent, ContentType: "application/json", MessageId: row.ID, Body: row.Payload}); err != nil {
-				return err
-			}
+		if len(rows) == 0 {
+			timer := time.NewTimer(100 * time.Millisecond)
 			select {
-			case ack := <-confirm:
-				if !ack.Ack {
-					return errors.New("broker rejected publish")
-				}
 			case <-ctx.Done():
+				timer.Stop()
 				return nil
-			case <-time.After(5 * time.Second):
-				return errors.New("broker confirm timeout")
+			case <-timer.C:
 			}
-			now := time.Now()
-			if err := a.db.WithContext(ctx).Model(&Outbox{}).Where("id = ? AND published_at IS NULL", row.ID).Update("published_at", &now).Error; err != nil {
-				return err
-			}
+			continue
+		}
+		batchCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		// amqp091-go ignores the context in PublishWithContext. Interrupt a
+		// blocked socket write as well as waiting for publisher confirmations.
+		stop := context.AfterFunc(batchCtx, func() { _ = conn.CloseDeadline(time.Now()) })
+		err := a.publishOutboxBatch(batchCtx, ch, confirm, returned, rows)
+		stop()
+		cancel()
+		if err != nil {
+			return err
 		}
 	}
+}
+
+func (a *App) publishOutboxBatch(ctx context.Context, ch *amqp.Channel, confirm <-chan amqp.Confirmation, returned <-chan amqp.Return, rows []Outbox) error {
+	first := ch.GetNextPublishSeqNo()
+	ids := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := ch.PublishWithContext(ctx, "owlet.events", "events", true, false, amqp.Publishing{DeliveryMode: amqp.Persistent, ContentType: "application/json", MessageId: row.ID, Body: row.Payload}); err != nil {
+			return err
+		}
+		ids = append(ids, row.ID)
+	}
+	for i := range rows {
+		select {
+		case <-returned:
+			return errors.New("outbox message unroutable")
+		case ack, ok := <-confirm:
+			if !ok || !ack.Ack || ack.DeliveryTag != first+uint64(i) {
+				return errors.New("outbox confirmation failed")
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	// Mandatory returns precede their publish confirmations.
+	select {
+	case <-returned:
+		return errors.New("outbox message unroutable")
+	default:
+	}
+	return a.db.WithContext(ctx).Model(&Outbox{}).Where("id IN ? AND published_at IS NULL", ids).Update("published_at", time.Now()).Error
 }
 
 func (a *App) consumeEvents(ctx context.Context, conn *amqp.Connection) error {
@@ -265,6 +301,9 @@ func (a *App) consumeEvents(ctx context.Context, conn *amqp.Connection) error {
 var mentionPattern = regexp.MustCompile(`@[a-zA-Z0-9_]{3,40}`)
 
 func (a *App) processEvent(ctx context.Context, e event) error {
+	if e.Kind == "interaction.requested" {
+		return a.executeInteraction(ctx, eventString(e, "commandId"))
+	}
 	var notifyUsers []uint
 	err := a.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&ProcessedEvent{ID: e.ID}).Error
@@ -318,6 +357,11 @@ func (a *App) processEvent(ctx context.Context, e event) error {
 	}
 	// Cache and realtime signals are optional side effects. A Redis outage must
 	// not dead-letter an event whose durable notification already committed.
+	if e.Kind == "video.published" {
+		a.invalidateTimeline(0)
+		_, _ = a.timeline(ctx, 0, 0)
+	}
+	_ = a.updateHotBucket(ctx, e)
 	videoID := eventUint(e, "videoId")
 	if videoID > 0 {
 		a.invalidateVideo(videoID)

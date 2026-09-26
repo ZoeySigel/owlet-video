@@ -1,0 +1,7 @@
+Variable_name	Value
+Com_stmt_close	302
+Com_stmt_execute	303
+Com_stmt_prepare	303
+Connections	15
+at	active_likes	active_comments
+2026-09-25 14:58:27	241024	212312

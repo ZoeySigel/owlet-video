@@ -5,7 +5,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
-import { api, type User, type Video } from "./api";
+import { cachedPublic, readResource, rememberVideo, type User, type Video } from "./api";
 
 const paths: Record<string, ReactNode> = {
   grid: (
@@ -200,18 +200,19 @@ export function Loading({ cards = false }: { cards?: boolean }) {
   );
 }
 export function useResource<T>(path: string | null) {
-  const [data, setData] = useState<T | null>(null);
+  const [data, setData] = useState<T | null>(() => cachedPublic<T>(path));
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!!path);
+  const [loading, setLoading] = useState(!!path && cachedPublic<T>(path) === null);
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion((v) => v + 1), []);
   useEffect(() => {
     let active = true;
-    setData(null);
+    const cached = cachedPublic<T>(path);
+    setData(cached);
     setError("");
-    setLoading(!!path);
+    setLoading(!!path && cached === null);
     if (path)
-      void api<T>(path)
+      void readResource<T>(path, version > 0)
         .then((value) => {
           if (active) setData(value);
         })
@@ -285,7 +286,7 @@ function VideoCard({
   return (
     <button
       className="video-card"
-      onClick={() => open(video.id)}
+      onClick={() => { rememberVideo(video); open(video.id); }}
       aria-label={`播放：${video.title}`}
     >
       <span className="video-art">

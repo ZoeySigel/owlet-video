@@ -1,0 +1,22 @@
+=== RUN   TestDatabaseParameterEncodingPolicy
+=== RUN   TestDatabaseParameterEncodingPolicy/#00
+=== RUN   TestDatabaseParameterEncodingPolicy/charset=utf8mb4
+=== RUN   TestDatabaseParameterEncodingPolicy/charset=utf8mb4,utf8
+=== RUN   TestDatabaseParameterEncodingPolicy/charset=utf8mb4&interpolateParams=false
+=== RUN   TestDatabaseParameterEncodingPolicy/charset=gbk
+=== RUN   TestDatabaseParameterEncodingPolicy/charset=utf8mb4,gbk
+=== RUN   TestDatabaseParameterEncodingPolicy/charset=gbk&interpolateParams=true
+=== RUN   TestDatabaseParameterEncodingPolicy/collation=gbk_chinese_ci
+--- PASS: TestDatabaseParameterEncodingPolicy (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/#00 (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/charset=utf8mb4 (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/charset=utf8mb4,utf8 (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/charset=utf8mb4&interpolateParams=false (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/charset=gbk (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/charset=utf8mb4,gbk (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/charset=gbk&interpolateParams=true (0.00s)
+    --- PASS: TestDatabaseParameterEncodingPolicy/collation=gbk_chinese_ci (0.00s)
+=== RUN   TestCommentRoundTripAndDuplicateWithEncodedParameters
+--- PASS: TestCommentRoundTripAndDuplicateWithEncodedParameters (0.41s)
+PASS
+ok  	github.com/ZoeySigel/owlet-video/backend	5.289s

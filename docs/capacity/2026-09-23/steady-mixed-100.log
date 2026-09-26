@@ -1,0 +1,11 @@
+PROGRESS elapsed=55s pendingOutbox=11 pendingCommands=1 completed=10246 monitorError=""
+PROGRESS elapsed=115s pendingOutbox=11 pendingCommands=1 completed=10846 monitorError=""
+PROGRESS elapsed=175s pendingOutbox=11 pendingCommands=1 completed=11446 monitorError=""
+PROGRESS elapsed=235s pendingOutbox=11 pendingCommands=1 completed=12046 monitorError=""
+PROGRESS elapsed=295s pendingOutbox=11 pendingCommands=1 completed=12646 monitorError=""
+PROGRESS elapsed=355s pendingOutbox=11 pendingCommands=1 completed=13246 monitorError=""
+PROGRESS elapsed=415s pendingOutbox=10 pendingCommands=0 completed=13846 monitorError=""
+PROGRESS elapsed=475s pendingOutbox=11 pendingCommands=1 completed=14446 monitorError=""
+PROGRESS elapsed=535s pendingOutbox=11 pendingCommands=1 completed=15046 monitorError=""
+PROGRESS elapsed=595s pendingOutbox=12 pendingCommands=1 completed=15646 monitorError=""
+mixed target=100 sent=60000 success=60000 errors=0 dropped=0 p95=55.0ms p99=65.6ms drain=1.0s

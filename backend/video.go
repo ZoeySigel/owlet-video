@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,10 +31,27 @@ func (a *App) uploadFor(c *gin.Context) (Upload, bool) {
 		return Upload{}, false
 	}
 	var u Upload
+	if c.Request.Method == "GET" {
+		var raw []byte
+		err := a.withRedis(c.Request.Context(), func(ctx context.Context) error {
+			var e error
+			raw, e = a.redis.Get(ctx, uploadKey(c.Param("id"))).Bytes()
+			return e
+		})
+		if err == nil && json.Unmarshal(raw, &u) == nil && u.ID == c.Param("id") && u.UserID == currentID(c) && time.Since(u.CreatedAt) < 24*time.Hour {
+			return u, true
+		}
+		u = Upload{}
+	}
 	if a.db.Where("id = ? AND user_id = ?", c.Param("id"), currentID(c)).First(&u).Error != nil {
 		errorJSON(c, 404, "upload_not_found")
 		return u, false
 	}
+	if time.Since(u.CreatedAt) > 24*time.Hour {
+		errorJSON(c, 410, "upload_expired")
+		return u, false
+	}
+	a.cacheUpload(u)
 	return u, true
 }
 
@@ -50,6 +69,26 @@ func (a *App) initUpload(c *gin.Context) {
 		errorJSON(c, 400, "invalid_md5")
 		return
 	}
+	hash := strings.ToLower(body.MD5)
+	var reusable Upload
+	var cachedID string
+	_ = a.withRedis(c.Request.Context(), func(ctx context.Context) error {
+		var e error
+		cachedID, e = a.redis.Get(ctx, uploadHashKey(currentID(c), hash)).Result()
+		return e
+	})
+	q := a.db.Where("user_id = ? AND file_md5 = ? AND size = ? AND chunks = ? AND published = ? AND created_at > ?", currentID(c), hash, body.Size, body.Chunks, false, time.Now().Add(-24*time.Hour))
+	if cachedID != "" {
+		_ = q.Session(&gorm.Session{}).Where("id = ?", cachedID).First(&reusable).Error
+	}
+	if reusable.ID == "" {
+		_ = q.Order("created_at DESC").First(&reusable).Error
+	}
+	if reusable.ID != "" {
+		a.cacheUpload(reusable)
+		c.JSON(201, gin.H{"id": reusable.ID, "chunkSize": chunkSize})
+		return
+	}
 	var used int64
 	a.db.Model(&Video{}).Select("COALESCE(SUM(size),0)").Scan(&used)
 	if used+body.Size > a.cfg.MaxMediaBytes {
@@ -65,6 +104,7 @@ func (a *App) initUpload(c *gin.Context) {
 		errorJSON(c, 500, "upload_init_failed")
 		return
 	}
+	a.cacheUpload(u)
 	c.JSON(201, gin.H{"id": u.ID, "chunkSize": chunkSize})
 }
 
@@ -193,6 +233,9 @@ func (a *App) completeUpload(c *gin.Context) {
 		errorJSON(c, 500, "upload_complete_failed")
 		return
 	}
+	u.Completed = true
+	u.StoredPath = path
+	a.cacheUpload(u)
 	_ = os.RemoveAll(dir)
 	c.JSON(200, gin.H{"id": u.ID})
 }
@@ -243,6 +286,7 @@ func (a *App) uploadAvatar(c *gin.Context) {
 		errorJSON(c, 500, "update_failed")
 		return
 	}
+	a.invalidateAuthor(currentID(c))
 	c.JSON(200, gin.H{"url": "/media" + url})
 }
 
@@ -320,7 +364,7 @@ func (a *App) publishVideo(c *gin.Context) {
 			return err
 		}
 		seen := map[string]bool{}
-		for _, raw := range tagPattern.FindAllString(body.Description, -1) {
+		for _, raw := range tagPattern.FindAllString(body.Title+" "+body.Description, -1) {
 			tag := strings.ToLower(strings.TrimPrefix(raw, "#"))
 			if !seen[tag] {
 				seen[tag] = true
@@ -339,6 +383,9 @@ func (a *App) publishVideo(c *gin.Context) {
 		errorJSON(c, 500, "publish_failed")
 		return
 	}
+	u.Published = true
+	a.cacheUpload(u)
+	a.invalidateTimeline(0)
 	a.hydrateVideo(&v)
 	c.JSON(201, v)
 }

@@ -1,0 +1,129 @@
+{
+  "recordedAt": "2026-09-23T12:38:28.6151423Z",
+  "steadyLoadgenSha256": "3D9A54F71A4B6C3661D88AED2F35493A4945CEF08A7699D8CA737C81819ABFFF",
+  "note": "Steady load generator adds periodic progress output; application binary unchanged.",
+  "files": [
+    {
+      "path": "backend/app_test.go",
+      "sha256": "06A67B088678BBBCA4535F93E62DA09A3D40047295C08952B01F8AAC6466ED14"
+    },
+    {
+      "path": "backend/auth.go",
+      "sha256": "6427C5859A86297400D6619852CB996D1EE791FC0BFAF4B3211233C32FDFE5C1"
+    },
+    {
+      "path": "backend/cache.go",
+      "sha256": "0437336FA51DFFF9F71A5C94A16F600DC09661B53BB458E24E63C6E425D0B502"
+    },
+    {
+      "path": "backend/config.go",
+      "sha256": "C171415F21E51F3B347D2B17BCCE5EEE0FA7BDD747E3C76213F7FC35B7F0499F"
+    },
+    {
+      "path": "backend/disk_linux.go",
+      "sha256": "E89FD3FBE67ED7C66DB847FED7A30B1C8BAE748113440FA2F066C4F400D3C06B"
+    },
+    {
+      "path": "backend/disk_windows.go",
+      "sha256": "553D53D92AE21C90ADC535990937CB0F98E18DF04C0B3E71BFEDAC8ACD97C845"
+    },
+    {
+      "path": "backend/feed.go",
+      "sha256": "EC7E28026406859BF82F6BC2E6E7F6777C4D3569A02378DC657ABFB4B0E28C28"
+    },
+    {
+      "path": "backend/highlights_test.go",
+      "sha256": "7B18766371899264E82D8F892E34E2DC1A8F782FBE792240A1836A957378A613"
+    },
+    {
+      "path": "backend/hot_buckets.go",
+      "sha256": "ED4C3B031C42817DE10B45899C18D99C63F34183BC28576543B5D1C5BD67624D"
+    },
+    {
+      "path": "backend/interactions.go",
+      "sha256": "DCF930DAEA7C612C90EC2A850B551FBA1F21C847AE579ACCEBEBFF49D636269A"
+    },
+    {
+      "path": "backend/likes_cursor.go",
+      "sha256": "75A667FFC36FF6C0F3876529052F6AC44CF5FF5E25684EEC3B5A5271C4B538E6"
+    },
+    {
+      "path": "backend/main.go",
+      "sha256": "5F1D38F6D2E02CD861AEE890004C8EE80525E4C33021CC247D662943505A56B3"
+    },
+    {
+      "path": "backend/messaging.go",
+      "sha256": "9AD435B81D204626895B3B4E48C6553178DD9FE6B238666134B076799E02B931"
+    },
+    {
+      "path": "backend/models.go",
+      "sha256": "9EA83EB759E8D5735DE3EC5494EB219B2339F365FB45D3A695442B6AF7B45004"
+    },
+    {
+      "path": "backend/profiling.go",
+      "sha256": "07C81075B50B3A65486E5946DEC0AC89107C863A7741C30BBD339D789726F400"
+    },
+    {
+      "path": "backend/ranking.go",
+      "sha256": "761F412A09F25325AF50E9F219952FC987DDD71B06490A175C69DCA7FC68F61E"
+    },
+    {
+      "path": "backend/recovery_test.go",
+      "sha256": "C5A969115A63BEC993528BA1F1BCCFB59C1B017E78D327260ECF61971F66B395"
+    },
+    {
+      "path": "backend/resilience_test.go",
+      "sha256": "BF7DD0354A27A98F2E56794529AD1372A746502885BDA52F20F6E5B370A7F93C"
+    },
+    {
+      "path": "backend/resilience.go",
+      "sha256": "72FCBED0362256C994F991FA8EEEBB1E1AB3ECF563F9F0AB70C2CC199D1910CA"
+    },
+    {
+      "path": "backend/seed.go",
+      "sha256": "4C405426D8624094FDC8AE3DDE167D7DB0314A411A4D58EFA55BA333A296A904"
+    },
+    {
+      "path": "backend/session_cache.go",
+      "sha256": "EE5F1D7CF0F6D0C11CF83C41CA597D3F85D1408EF6A5C5520F9F6FF85D6D17BF"
+    },
+    {
+      "path": "backend/social.go",
+      "sha256": "D73F72220B554DFABD8F7A43D4A37B826FAB53062958F29F60D54BCF785D9D5B"
+    },
+    {
+      "path": "backend/timeline.go",
+      "sha256": "A8D8A900321D99C62BFDB80BDE1E6E55EBCD2684767B9F39D15127069E5F3F4C"
+    },
+    {
+      "path": "backend/upload_cache.go",
+      "sha256": "CA011B192C3EFA2503C23719CDB718C8CAD5300E8E4C236F6D0259D83C586551"
+    },
+    {
+      "path": "backend/video.go",
+      "sha256": "7AF7530158EC70C55859B3BEE164A9B53D12F4A6F2892F47029D966E23CCE00E"
+    },
+    {
+      "path": "backend/worker.go",
+      "sha256": "ABD25F64B95428175E5478444A0EA1B3CDB8703A29E6E0241496C40415CC16DC"
+    }
+  ],
+  "capacityFiles": [
+    {
+      "path": "D:\\coding\\owlet-video\\backend\\tools\\capacity\\main.go",
+      "sha256": "9C410F587CE23EA7550DC6EA277901F7F7C87B1EAAF91C6014975CA05C3D4521"
+    },
+    {
+      "path": "D:\\coding\\owlet-video\\compose.capacity.yml",
+      "sha256": "B9350DA4F3D7001E26E36CD0ED787F89A937C448EDF622EB8EC3B6A59E484376"
+    },
+    {
+      "path": "D:\\coding\\owlet-video\\scripts\\capacity\\run.py",
+      "sha256": "49277989D26CFED920B9FF7FDC3EA040B3BF4584ABCC8AC17B7547ED36B36993"
+    },
+    {
+      "path": "D:\\coding\\owlet-video\\scripts\\capacity\\summarize.py",
+      "sha256": "BD274317531F659B742D4A38BE092D176ADFD8356225788D1C80DAAD9535955D"
+    }
+  ]
+}

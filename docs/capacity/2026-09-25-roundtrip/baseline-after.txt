@@ -1,0 +1,12 @@
+Variable_name	Value
+Com_stmt_close	322422
+Com_stmt_execute	322422
+Com_stmt_prepare	322422
+Connections	236
+EVENT_NAME	COUNT_STAR	wait_seconds
+wait/io/file/innodb/innodb_log_file	289312	489.04
+wait/io/file/innodb/innodb_data_file	143332	119.41
+wait/io/file/innodb/innodb_dblwr_file	1110	19.26
+wait/io/file/innodb/innodb_temp_file	60	0.27
+wait/io/file/innodb/innodb_tablespace_open_file	0	0.00
+wait/io/file/innodb/innodb_arch_file	0	0.00

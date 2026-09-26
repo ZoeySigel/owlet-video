@@ -1,0 +1,2 @@
+PROGRESS elapsed=55s pendingOutbox=35 pendingCommands=73 completed=7217 monitorError=""
+write target=100 sent=9000 success=9000 errors=0 dropped=0 p95=1099.7ms p99=1299.2ms drain=1.0s

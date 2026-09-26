@@ -1,0 +1,7 @@
+Variable_name	Value
+Com_stmt_close	322436
+Com_stmt_execute	322436
+Com_stmt_prepare	322436
+Connections	268
+at	active_likes	active_comments
+2026-09-25 15:10:11	238208	228902

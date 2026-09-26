@@ -1,0 +1,20 @@
+{
+  "recordedAt": "2026-09-23T12:09:58.6756424Z",
+  "cpu": {
+    "Name": "AMD Ryzen 7 6800H with Radeon Graphics         ",
+    "NumberOfCores": 8,
+    "NumberOfLogicalProcessors": 16
+  },
+  "memory": 16326889472,
+  "docker": {
+    "ServerVersion": "29.7.2",
+    "NCPU": 16,
+    "MemTotal": 7903801344,
+    "OperatingSystem": "Docker Desktop"
+  },
+  "go": "go version go1.27.1 windows/amd64",
+  "commit": "ef9d41778f2e32d85dc7e3614ca47ecd53211d42",
+  "dirty": true,
+  "apiBinarySha256": "4F53B2D3255CF7214820E63F38188A814AF6C799831C60C6A9C1ABF7F2BF5CB4",
+  "loadgenSha256": "E705E58DC1AA32D0679D4CBEF874C0AD6A809CD8EE390ADEF6F35F0AB6E41027"
+}

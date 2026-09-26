@@ -1,0 +1,1 @@
+latest target=1000 sent=30000 success=30000 errors=0 dropped=0 p95=37.2ms p99=131.4ms drain=30.4s

@@ -1,0 +1,1 @@
+detail-random target=100 sent=3000 success=3000 errors=0 dropped=0 p95=6.5ms p99=8.3ms drain=0.0s

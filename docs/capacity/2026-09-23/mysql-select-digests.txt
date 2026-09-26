@@ -1,0 +1,9 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+query	COUNT_STAR	total_seconds	avg_ms	SUM_ROWS_SENT	SUM_ROWS_EXAMINED
+SELECT COUNT ( * ) FROM `videos`	15	0.23	15.03	15	0
+SELECT ( SELECT COUNT ( * ) FROM `outboxes` WHERE `published_at` IS NULL ) , ( SELECT COUNT ( * ) FROM `interaction_commands` WHERE `completed_at` IS NULL ) , ( SELECT COUNT ( * ) FROM `interaction_commands` WHERE `completed_at` IS NOT NULL	121	0.07	0.62	121	5184
+SELECT @@`version_comment` LIMIT ?	190	0.04	0.20	190	190
+SELECT ?	190	0.02	0.10	190	190
+SELECT SCHEMA ( )	80	0.01	0.17	80	80
+SELECT COUNT ( * ) FROM `users`	1	0.01	11.87	1	0
+SELECT `VERSION` ( )	2	0.00	0.26	2	2

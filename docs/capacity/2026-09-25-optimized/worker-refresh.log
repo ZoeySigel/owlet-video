@@ -1,0 +1,100 @@
+worker-1  | 2026/09/25 07:48:26 [32mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:160 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[893.468ms] [33m[rows:2000][35m SELECT v.id, COALESCE(a.score,0) AS score FROM videos v
+worker-1  |  LEFT JOIN (SELECT video_id, SUM(weight) AS score FROM (
+worker-1  |    SELECT video_id, 3 AS weight FROM likes WHERE created_at > '2026-09-24 07:48:26.075' AND created_at <= '2026-09-25 07:48:26.075'
+worker-1  |    UNION ALL
+worker-1  |    SELECT video_id, 5 AS weight FROM comments WHERE created_at > '2026-09-24 07:48:26.075' AND created_at <= '2026-09-25 07:48:26.075'
+worker-1  |  ) events GROUP BY video_id) a ON a.video_id=v.id
+worker-1  |  WHERE v.published_at <= '2026-09-25 07:48:26.075' ORDER BY score DESC, v.id DESC LIMIT 2000[0m
+worker-1  | 
+worker-1  | 2026/09/25 07:48:27 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.721ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '5a03d953-b97c-5761-9777-0cc1544f5e37' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:49:27 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.651ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '93f3268b-ba9a-5ff6-b080-b3992b392c36' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:49:29 [32mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:160 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[2578.476ms] [33m[rows:2000][35m SELECT v.id, COALESCE(a.score,0) AS score FROM videos v
+worker-1  |  LEFT JOIN (SELECT video_id, SUM(weight) AS score FROM (
+worker-1  |    SELECT video_id, 3 AS weight FROM likes WHERE created_at > '2026-09-24 07:49:27.048' AND created_at <= '2026-09-25 07:49:27.048'
+worker-1  |    UNION ALL
+worker-1  |    SELECT video_id, 5 AS weight FROM comments WHERE created_at > '2026-09-24 07:49:27.048' AND created_at <= '2026-09-25 07:49:27.048'
+worker-1  |  ) events GROUP BY video_id) a ON a.video_id=v.id
+worker-1  |  WHERE v.published_at <= '2026-09-25 07:49:27.048' ORDER BY score DESC, v.id DESC LIMIT 2000[0m
+worker-1  | 
+worker-1  | 2026/09/25 07:49:29 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.249ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '7be2479d-31b2-54e1-8d05-95aa9cce1566' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:49:39 [32mgithub.com/ZoeySigel/owlet-video/backend/worker.go:226 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[228.073ms] [33m[rows:9][35m UPDATE `outboxes` SET `published_at`='2026-09-25 07:49:39.067' WHERE id IN ('683331c9-6530-455e-9ef8-fdf75c21552c','ffd1c860-6417-4a02-8e32-ed8759b59801','1655fb1c-a399-49de-9b5f-cc95715b4569','0624dfb1-9716-41c7-9871-a3b56f2ebb82','243c5ad9-c13f-4d0c-b203-d9632833474b','e2e2f797-0f20-413b-82b2-16bbc3aa97d7','2d0d3d99-c7f1-43c6-8467-2e1b01fd083d','dd0c7bfc-f958-4d2f-b99d-a37b0f631388','cde815a4-65aa-4238-9518-66651364c73f') AND published_at IS NULL[0m
+worker-1  | 
+worker-1  | 2026/09/25 07:50:29 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.645ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '4ac0bdc7-3074-5da1-ab67-d50ebdce6226' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:50:32 [32mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:160 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[3017.974ms] [33m[rows:2000][35m SELECT v.id, COALESCE(a.score,0) AS score FROM videos v
+worker-1  |  LEFT JOIN (SELECT video_id, SUM(weight) AS score FROM (
+worker-1  |    SELECT video_id, 3 AS weight FROM likes WHERE created_at > '2026-09-24 07:50:29.824' AND created_at <= '2026-09-25 07:50:29.824'
+worker-1  |    UNION ALL
+worker-1  |    SELECT video_id, 5 AS weight FROM comments WHERE created_at > '2026-09-24 07:50:29.824' AND created_at <= '2026-09-25 07:50:29.824'
+worker-1  |  ) events GROUP BY video_id) a ON a.video_id=v.id
+worker-1  |  WHERE v.published_at <= '2026-09-25 07:50:29.824' ORDER BY score DESC, v.id DESC LIMIT 2000[0m
+worker-1  | 
+worker-1  | 2026/09/25 07:50:32 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.559ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'eebbff03-2489-580e-910d-39e5af39fe4f' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:51:33 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.078ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'adbc3dbb-f9b7-588d-915b-a76721ee2701' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:51:33 [32mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:160 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[763.350ms] [33m[rows:2000][35m SELECT v.id, COALESCE(a.score,0) AS score FROM videos v
+worker-1  |  LEFT JOIN (SELECT video_id, SUM(weight) AS score FROM (
+worker-1  |    SELECT video_id, 3 AS weight FROM likes WHERE created_at > '2026-09-24 07:51:33.093' AND created_at <= '2026-09-25 07:51:33.093'
+worker-1  |    UNION ALL
+worker-1  |    SELECT video_id, 5 AS weight FROM comments WHERE created_at > '2026-09-24 07:51:33.093' AND created_at <= '2026-09-25 07:51:33.093'
+worker-1  |  ) events GROUP BY video_id) a ON a.video_id=v.id
+worker-1  |  WHERE v.published_at <= '2026-09-25 07:51:33.093' ORDER BY score DESC, v.id DESC LIMIT 2000[0m
+worker-1  | 
+worker-1  | 2026/09/25 07:51:33 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.935ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '2287d620-ea60-51ea-a6c6-b3ecbeb20ab4' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/25 07:54:07 worker pprof listening on 127.0.0.1:6061
+worker-1  | 
+worker-1  | 2026/09/25 07:54:07 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.547ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'c7f7a54e-428d-5240-8477-8dac42cc0acf' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:54:08 [32mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:160 [33mSLOW SQL >= 200ms
+worker-1  | [0m[31;1m[784.583ms] [33m[rows:2000][35m SELECT v.id, COALESCE(a.score,0) AS score FROM videos v
+worker-1  |  LEFT JOIN (SELECT video_id, SUM(weight) AS score FROM (
+worker-1  |    SELECT video_id, 3 AS weight FROM likes WHERE created_at > '2026-09-24 07:54:07.337' AND created_at <= '2026-09-25 07:54:07.337'
+worker-1  |    UNION ALL
+worker-1  |    SELECT video_id, 5 AS weight FROM comments WHERE created_at > '2026-09-24 07:54:07.337' AND created_at <= '2026-09-25 07:54:07.337'
+worker-1  |  ) events GROUP BY video_id) a ON a.video_id=v.id
+worker-1  |  WHERE v.published_at <= '2026-09-25 07:54:07.337' ORDER BY score DESC, v.id DESC LIMIT 2000[0m
+worker-1  | 
+worker-1  | 2026/09/25 07:54:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.128ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'e6c7a099-db9c-5ee7-a9ca-436d98161e59' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:55:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.986ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '128575fe-4e96-5c30-8647-4d5ea05bd2b1' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:56:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[1.067ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '11aabdb5-db83-5cf7-a896-c0eb327ee913' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:57:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[0.727ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = 'd2051bc4-c766-5246-aa0c-131a500b6b4e' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 
+worker-1  | 2026/09/25 07:58:08 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[5.853ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '035c26db-2ec5-5868-acc1-bf9d202926d7' AND sort = 'hot' ORDER BY `feed_snapshots`.`id` LIMIT 1
+worker-1  | 2026/09/25 07:58:12 ranking refresh failed (hot): context deadline exceeded
+worker-1  | 
+worker-1  | 2026/09/25 07:58:12 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:160 [35;1mcontext deadline exceeded
+worker-1  | [0m[33m[3594.509ms] [34;1m[rows:-][0m SELECT v.id, COALESCE(a.score,0) AS score FROM videos v
+worker-1  |  LEFT JOIN (SELECT video_id, SUM(weight) AS score FROM (
+worker-1  |    SELECT video_id, 3 AS weight FROM likes WHERE created_at > '2026-09-24 07:58:08.402' AND created_at <= '2026-09-25 07:58:08.402'
+worker-1  |    UNION ALL
+worker-1  |    SELECT video_id, 5 AS weight FROM comments WHERE created_at > '2026-09-24 07:58:08.402' AND created_at <= '2026-09-25 07:58:08.402'
+worker-1  |  ) events GROUP BY video_id) a ON a.video_id=v.id
+worker-1  |  WHERE v.published_at <= '2026-09-25 07:58:08.402' ORDER BY score DESC, v.id DESC LIMIT 2000
+worker-1  | 
+worker-1  | 2026/09/25 07:58:12 [31;1mgithub.com/ZoeySigel/owlet-video/backend/ranking.go:128 [35;1mrecord not found
+worker-1  | [0m[33m[61.322ms] [34;1m[rows:0][0m SELECT * FROM `feed_snapshots` WHERE id = '2d29bfe0-9ca7-5710-8d5c-b929ca2d468b' AND sort = 'likes' ORDER BY `feed_snapshots`.`id` LIMIT 1

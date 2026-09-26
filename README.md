@@ -22,7 +22,7 @@ Owlet Video 是一个前后端分离的视频分享应用，支持视频上传�
 
 访客可浏览公开视频、用户主页和评论。发布、互动和私信等操作需要登录；注册使用一次性邀请码。
 
-登录与注册按 IP 分别限流：每小时最多 60 次登录请求、20 次注册请求。成功和失败请求均计数，窗口从首次请求开始计算，满一小时后重置。
+登录与注册按 IP 分别限流：每小时最多 60 次登录请求、20 次注册请求。成功和失败请求均计数。互动按账号限流：点赞/取消每分钟 30 次、评论/删除 10 次、关注/取关 20 次。Redis 故障时保留本地剩余预算。
 
 ## 技术栈
 
@@ -41,25 +41,27 @@ Owlet Video 是一个前后端分离的视频分享应用，支持视频上传�
 应用由静态前端、API 和 Worker 三部分组成。API 与 Worker 使用同一份 Go 代码，通过启动参数选择运行模式。
 
 - **请求链路**：浏览器通过同源反向代理访问 `/api/v1`，视频等媒体文件由 Web 服务器直接提供。
-- **业务数据**：MySQL 保存业务数据与不可变榜单快照。最新与关注使用 ID 游标；热门和最多点赞使用签名快照游标，优先读取 Redis 有序集合，缓存故障时读取持久化快照。
-- **异步事件**：业务变更与 Outbox 事件在同一数据库事务中提交。Worker 将事件发送至 RabbitMQ，消费端使用手动确认、重试和事件去重处理通知等任务。
+- **业务数据**：MySQL 保存业务数据与不可变榜单快照。最新与关注使用 Redis 热时间线、MySQL 冷数据拼接及 ID 游标；热门和最多点赞使用签名快照游标，优先读取 Redis 有序集合，缓存故障时读取持久化快照。
+- **异步事件**：互动命令与 Outbox 同事务提交，Worker 消费后写入业务数据和通知事件；MQ 故障支持幂等直写。默认保持同步响应结构，也支持 `Prefer: respond-async` 返回 202。
 - **通知更新**：通知先持久化，再通过 Redis Pub/Sub 和 SSE 提醒前端刷新。连接中断后仍可读取历史通知。
 - **文件存储**：视频分片写入临时目录，校验并完成发布后移入媒体目录。备份与恢复需要同时覆盖数据库和媒体文件。
 
-表结构、缓存策略及消息一致性设计见 [架构文档](docs/architecture.md)。
+表结构、缓存策略及消息一致性设计见 [架构文档](docs/architecture.md)。参考项目的 21 项后端亮点、接口用法和实现边界见 [后端亮点对照](docs/backend-highlights.md)。
 
 ## 后端设计
 
 | 能力 | 实现与边界 |
 | --- | --- |
 | 稳定排序分页 | 热门与点赞榜固定快照，按分数、视频 ID 排序；互动计数变化不会移动已发出游标中的视频位置。默认快照保留 15 分钟、最多 2000 条，过期后提示重新加载 |
-| 滑动窗口热榜 | 最近 24 小时内仍有效的点赞 × 3 + 评论 × 5；每分钟重算，过期互动自然退出，不依赖新事件触发 |
-| 事件驱动异步处理 | 事务性 Outbox、RabbitMQ 发布确认、消费幂等、延迟重试和死信队列；Worker 断线后退避重连 |
+| 滑动窗口热榜 | 最近 24 小时有效点赞 × 3 + 评论 × 5；SQL 内聚合并截取前 K 条，Redis 缓存与持久化快照保证稳定翻页 |
+| 事件驱动异步处理 | 持久化互动命令、事务性 Outbox、发布确认、幂等直写、延迟重试和死信；Worker 断线后退避重连 |
 | 热点缓存保护 | 详情请求合并、带令牌的 Redis 重建锁、原子回填、空值缓存、TTL 抖动与回源并发上限 |
 | 降级与恢复 | Redis 超时与熔断、数据库回退、短期旧详情兜底、本地限流、榜单缓存自动重建、SSE 定期刷新通知 |
 | 工程交付 | 独立测试容器、真实依赖故障注入、Go 竞争检测、前端类型检查与静态构建、手动发布及健康检查回滚 |
 
 这些机制提供应用层的故障降级与恢复，当前单机部署不具备数据库、消息队列或主机级故障转移。测试方法与限制见 [后端验收](docs/backend-validation.md)。
+
+本地容量实测、失败档位与复现方法见 [容量压测](docs/capacity/README.md)。初次压测发现热榜重建和 Outbox 投递瓶颈，已针对查询结果规模与批量投递优化；实际容量以对应版本的复测报告为准。
 
 ## 快速启动
 
@@ -102,6 +104,8 @@ docker compose ps
 ```
 
 首次启动会拉取依赖镜像、构建应用并初始化数据库表。服务就绪后访问 [http://localhost:3000](http://localhost:3000)。
+
+也可运行 `bash ./start.sh` 或 Windows 下的 `./start.ps1`。脚本支持前端/Worker 开关；诊断与开关说明见 [后端亮点对照](docs/backend-highlights.md)。
 
 ### 3. 创建账号
 
@@ -191,6 +195,7 @@ GitHub Actions 在 `main` 推送和 Pull Request 时运行检查，并启动 MyS
 | 内容 | `GET /videos`、`GET /videos/:id`、`GET /tags/:tag/videos`、`POST /videos` |
 | 上传 | `POST /uploads`、`GET /uploads/:id`、`PUT /uploads/:id/chunks/:index`、`POST /uploads/:id/complete`、`POST /covers` |
 | 互动 | `GET/PUT/DELETE /videos/:id/like`、`GET/POST /videos/:id/comments`、`DELETE /comments/:id`、`PUT/DELETE /users/:id/follow`、`GET /me/likes` |
+| 异步操作 | `GET /interactions/:id`（查询当前用户的异步互动命令结果） |
 | 私信 | `GET /messages`、`GET/POST /messages/:peer` |
 | 通知 | `GET /notifications`、`GET /notifications/unread`、`PATCH /notifications/read`、`GET /notifications/stream` |
 

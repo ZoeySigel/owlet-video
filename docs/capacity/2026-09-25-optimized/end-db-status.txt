@@ -1,0 +1,5 @@
+Variable_name	Value
+Com_commit	480433
+Connections	26842
+Threads_connected	12
+Threads_created	1377

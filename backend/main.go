@@ -19,7 +19,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -42,11 +41,11 @@ func main() {
 	if err := os.MkdirAll(filepath.Join(cfg.DataDir, "media"), 0750); err != nil {
 		log.Fatal(err)
 	}
-	db, err := gorm.Open(mysql.Open(cfg.MySQLDSN), &gorm.Config{TranslateError: true})
+	db, err := openDatabase(cfg.MySQLDSN, &gorm.Config{TranslateError: true})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := db.AutoMigrate(&User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
+	if err := db.AutoMigrate(&InteractionCommand{}, &User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
 		log.Fatal(err)
 	}
 	sqlDB, err := db.DB()
@@ -54,7 +53,10 @@ func main() {
 		log.Fatal(err)
 	}
 	sqlDB.SetMaxOpenConns(16)
-	sqlDB.SetMaxIdleConns(4)
+	// Retain burst connections within the existing 16-connection ceiling.
+	// A much smaller idle pool causes repeated authentication/SET NAMES under load.
+	sqlDB.SetMaxIdleConns(16)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr, Password: cfg.RedisPassword, PoolSize: 8, DialTimeout: cfg.RedisTimeout, ReadTimeout: cfg.RedisTimeout, WriteTimeout: cfg.RedisTimeout, PoolTimeout: cfg.RedisTimeout, MaxRetries: -1, ContextTimeoutEnabled: true})
 	app := &App{cfg: cfg, db: db, redis: rdb}
@@ -62,9 +64,15 @@ func main() {
 	defer stop()
 	defer sqlDB.Close()
 	defer rdb.Close()
+	defer app.state().publisher.close()
 	mode := "api"
 	if len(os.Args) > 1 {
 		mode = os.Args[1]
+	}
+	if mode == "api" || mode == "worker" {
+		if err := startProfiler(ctx, mode); err != nil {
+			log.Fatal(err)
+		}
 	}
 	switch mode {
 	case "api":
@@ -126,14 +134,15 @@ func (a *App) router() *gin.Engine {
 	v.GET("/auth/me", a.auth(), a.me)
 	v.GET("/users/:id", a.userProfile)
 	v.GET("/users/:id/videos", a.userVideos)
-	v.GET("/videos", a.feed)
+	v.GET("/videos", a.softAuth(), a.feed)
 	v.GET("/videos/:id", a.videoDetail)
 	v.GET("/videos/:id/comments", a.comments)
-	v.GET("/tags/:tag/videos", a.tagFeed)
+	v.GET("/tags/:tag/videos", a.softAuth(), a.tagFeed)
 	v.GET("/users/:id/followers", a.followers)
 	v.GET("/users/:id/following", a.following)
 	auth := v.Group("")
 	auth.Use(a.auth())
+	auth.GET("/interactions/:id", a.interactionStatus)
 	auth.PATCH("/me", a.updateMe)
 	auth.PATCH("/auth/password", a.changePassword)
 	auth.POST("/me/avatar", a.uploadAvatar)
@@ -143,14 +152,14 @@ func (a *App) router() *gin.Engine {
 	auth.PUT("/uploads/:id/chunks/:index", a.uploadChunk)
 	auth.POST("/uploads/:id/complete", a.completeUpload)
 	auth.POST("/videos", a.publishVideo)
-	auth.PUT("/videos/:id/like", a.likeVideo)
+	auth.PUT("/videos/:id/like", a.rateLimit("like", 30, time.Minute), a.likeVideo)
 	auth.GET("/videos/:id/like", a.isLiked)
-	auth.DELETE("/videos/:id/like", a.unlikeVideo)
+	auth.DELETE("/videos/:id/like", a.rateLimit("like", 30, time.Minute), a.unlikeVideo)
 	auth.GET("/me/likes", a.myLikes)
-	auth.POST("/videos/:id/comments", a.createComment)
-	auth.DELETE("/comments/:id", a.deleteComment)
-	auth.PUT("/users/:id/follow", a.follow)
-	auth.DELETE("/users/:id/follow", a.unfollow)
+	auth.POST("/videos/:id/comments", a.rateLimit("comment", 10, time.Minute), a.createComment)
+	auth.DELETE("/comments/:id", a.rateLimit("comment", 10, time.Minute), a.deleteComment)
+	auth.PUT("/users/:id/follow", a.rateLimit("follow", 20, time.Minute), a.follow)
+	auth.DELETE("/users/:id/follow", a.rateLimit("follow", 20, time.Minute), a.unfollow)
 	auth.GET("/messages", a.conversations)
 	auth.GET("/messages/:peer", a.thread)
 	auth.POST("/messages/:peer", a.sendMessage)

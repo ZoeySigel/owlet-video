@@ -1,0 +1,1 @@
+detail-random target=300 sent=9000 success=8957 errors=43 dropped=0 p95=16.8ms p99=56.2ms drain=0.0s

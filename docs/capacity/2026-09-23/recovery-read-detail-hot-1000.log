@@ -1,0 +1,1 @@
+detail-hot target=1000 sent=30000 success=30000 errors=0 dropped=0 p95=1.7ms p99=2.3ms drain=30.4s

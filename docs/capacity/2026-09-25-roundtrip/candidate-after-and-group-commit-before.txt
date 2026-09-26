@@ -1,0 +1,12 @@
+Variable_name	Value
+Com_stmt_close	322437
+Com_stmt_execute	322437
+Com_stmt_prepare	322437
+Connections	545
+status	COUNT(*)
+201	127798
+Variable_name	Value
+binlog_group_commit_sync_delay	10000
+binlog_group_commit_sync_no_delay_count	8
+innodb_flush_log_at_trx_commit	1
+sync_binlog	1

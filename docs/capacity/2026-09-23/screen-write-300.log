@@ -1,0 +1,1 @@
+write target=300 sent=4297 success=4292 errors=5 dropped=4703 p95=6413.8ms p99=8087.4ms drain=30.4s

@@ -84,33 +84,7 @@ func (a *App) newSession(c *gin.Context, userID uint) error {
 	return nil
 }
 
-func (a *App) auth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		raw, err := c.Cookie("owlet_access")
-		if err != nil {
-			errorJSON(c, 401, "login_required")
-			return
-		}
-		claims, err := a.parseToken(raw, "access")
-		if err != nil {
-			errorJSON(c, 401, "invalid_session")
-			return
-		}
-		uid, err := strconv.ParseUint(claims.Subject, 10, 64)
-		if err != nil {
-			errorJSON(c, 401, "invalid_session")
-			return
-		}
-		var s Session
-		if a.db.Select("id", "user_id", "expires_at", "revoked_at").First(&s, "id = ?", claims.SessionID).Error != nil || s.UserID != uint(uid) || s.RevokedAt != nil || time.Now().After(s.ExpiresAt) {
-			errorJSON(c, 401, "invalid_session")
-			return
-		}
-		c.Set("userID", uint(uid))
-		c.Set("sessionID", claims.SessionID)
-		c.Next()
-	}
-}
+func (a *App) auth() gin.HandlerFunc { return func(c *gin.Context) { a.authenticate(c, false) } }
 
 func (a *App) sameOrigin() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -131,7 +105,11 @@ var limitScript = redis.NewScript(`local n=redis.call('INCR',KEYS[1]); if n==1 t
 
 func (a *App) rateLimit(key string, max int64, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		limitKey := "limit:" + key + ":" + c.ClientIP()
+		subject := c.ClientIP()
+		if uid, ok := c.Get("userID"); ok {
+			subject = "user:" + strconv.FormatUint(uint64(uid.(uint)), 10)
+		}
+		limitKey := "limit:" + key + ":" + subject
 		// Track the same budget locally even while Redis is healthy. Falling back
 		// therefore never starts a fresh local allowance in the middle of an outage.
 		allowed, localErr := a.state().limiter.take(limitKey, max, window, time.Now())
@@ -255,11 +233,26 @@ func (a *App) refresh(c *gin.Context) {
 }
 
 func (a *App) logout(c *gin.Context) {
+	sid := ""
 	if raw, err := c.Cookie("owlet_refresh"); err == nil {
 		if claims, e := a.parseToken(raw, "refresh"); e == nil {
-			now := time.Now()
-			_ = a.db.Model(&Session{}).Where("id = ?", claims.SessionID).Update("revoked_at", &now).Error
+			sid = claims.SessionID
 		}
+	}
+	if sid == "" {
+		if raw, present := accessCredential(c); present {
+			if claims, e := a.parseToken(raw, "access"); e == nil {
+				sid = claims.SessionID
+			}
+		}
+	}
+	if sid != "" {
+		now := time.Now()
+		if a.db.Model(&Session{}).Where("id = ?", sid).Update("revoked_at", now).Error != nil {
+			errorJSON(c, 503, "logout_failed")
+			return
+		}
+		a.retireSessions([]string{sid})
 	}
 	a.clearCookies(c)
 	c.JSON(200, gin.H{"ok": true})
@@ -302,9 +295,30 @@ func (a *App) updateMe(c *gin.Context) {
 		errorJSON(c, 400, "empty_update")
 		return
 	}
-	if a.db.Model(&User{}).Where("id = ?", currentID(c)).Updates(updates).Error != nil {
+	var revoked []string
+	err := a.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&User{}).Where("id = ?", currentID(c)).Updates(updates).Error; err != nil {
+			return err
+		}
+		if body.Username != nil {
+			var err error
+			revoked, err = revokeSessions(tx, currentID(c))
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		errorJSON(c, 409, "update_failed")
 		return
+	}
+	a.retireSessions(revoked)
+	a.invalidateAuthor(currentID(c))
+	if body.Username != nil {
+		if a.newSession(c, currentID(c)) != nil {
+			a.clearCookies(c)
+			errorJSON(c, 503, "session_error")
+			return
+		}
 	}
 	a.me(c)
 }
@@ -328,16 +342,20 @@ func (a *App) changePassword(c *gin.Context) {
 		errorJSON(c, 500, "password_error")
 		return
 	}
+	var revoked []string
 	if err := a.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&User{}).Where("id = ?", u.ID).Update("password_hash", string(hash)).Error; err != nil {
 			return err
 		}
-		now := time.Now()
-		return tx.Model(&Session{}).Where("user_id = ? AND id <> ?", u.ID, c.GetString("sessionID")).Update("revoked_at", &now).Error
+		var err error
+		revoked, err = revokeSessions(tx, u.ID)
+		return err
 	}); err != nil {
 		errorJSON(c, 500, "password_error")
 		return
 	}
+	a.retireSessions(revoked)
+	a.clearCookies(c)
 	c.JSON(200, gin.H{"ok": true})
 }
 

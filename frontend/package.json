@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:navigation": "node --test scripts/test-navigation.mjs",
     "test:upload": "node --test scripts/test-upload.mjs",
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",

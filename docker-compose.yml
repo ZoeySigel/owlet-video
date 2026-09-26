@@ -52,6 +52,7 @@ services:
       PUBLIC_URL: http://localhost:3000
       DATA_DIR: /var/lib/owlet-video
       SECURE_COOKIES: "false"
+      PPROF_ENABLED: ${PPROF_ENABLED:-false}
       HOT_WINDOW: ${HOT_WINDOW:-24h}
       RANK_REFRESH: ${RANK_REFRESH:-1m}
       FEED_SNAPSHOT_TTL: ${FEED_SNAPSHOT_TTL:-15m}

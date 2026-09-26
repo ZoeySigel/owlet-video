@@ -84,4 +84,4 @@ func (c Config) defaults() Config {
 }
 
 const accessTTL = 15 * time.Minute
-const refreshTTL = 30 * 24 * time.Hour
+const refreshTTL = 7 * 24 * time.Hour

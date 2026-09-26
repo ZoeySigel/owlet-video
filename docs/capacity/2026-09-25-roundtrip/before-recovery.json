@@ -1,0 +1,8 @@
+{
+  "at": "2026-09-25T15:08:50.3624781Z",
+  "pendingOutbox": 0,
+  "pendingCommands": 0,
+  "completedCommands": 109798,
+  "failedCommands": 0,
+  "notifications": 109773
+}

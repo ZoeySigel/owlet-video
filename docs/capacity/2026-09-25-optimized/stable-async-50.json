@@ -1,0 +1,376 @@
+{
+  "scenario": "async",
+  "targetRps": 50,
+  "Started": "2026-09-25T12:34:54.8333035Z",
+  "Finished": "2026-09-25T12:37:55.2767911Z",
+  "windowSeconds": 180,
+  "Planned": 9000,
+  "Sent": 9000,
+  "Dropped": 0,
+  "Success": 9000,
+  "Errors": 0,
+  "Limited": 0,
+  "successRps": 49.98888888888392,
+  "status": {
+    "202": 9000
+  },
+  "execution": {},
+  "LatencyMS": {
+    "count": 9000,
+    "P50": 24.258,
+    "P95": 63.151,
+    "P99": 76.196,
+    "Max": 341.575
+  },
+  "SuccessLatencyMS": {
+    "count": 9000,
+    "P50": 24.258,
+    "P95": 63.151,
+    "P99": 76.196,
+    "Max": 341.575
+  },
+  "SchedulerLagMS": {
+    "count": 9000,
+    "P50": 0.373,
+    "P95": 0.753,
+    "P99": 1.194,
+    "Max": 5.427
+  },
+  "endpoints": {
+    "async": {
+      "count": 9000,
+      "P50": 24.258,
+      "P95": 63.151,
+      "P99": 76.196,
+      "Max": 341.575
+    }
+  },
+  "errorSamples": null,
+  "backlog": [
+    {
+      "at": "2026-09-25T12:34:54.1852588Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 82800,
+      "failedCommands": 0,
+      "notifications": 82781
+    },
+    {
+      "at": "2026-09-25T12:34:59.8336881Z",
+      "pendingOutbox": 3,
+      "pendingCommands": 1,
+      "completedCommands": 83049,
+      "failedCommands": 0,
+      "notifications": 83028
+    },
+    {
+      "at": "2026-09-25T12:35:04.8334247Z",
+      "pendingOutbox": 5,
+      "pendingCommands": 1,
+      "completedCommands": 83299,
+      "failedCommands": 0,
+      "notifications": 83274
+    },
+    {
+      "at": "2026-09-25T12:35:09.8340326Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 83549,
+      "failedCommands": 0,
+      "notifications": 83528
+    },
+    {
+      "at": "2026-09-25T12:35:14.8336659Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 83799,
+      "failedCommands": 0,
+      "notifications": 83778
+    },
+    {
+      "at": "2026-09-25T12:35:19.8337376Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 1,
+      "completedCommands": 84049,
+      "failedCommands": 0,
+      "notifications": 84029
+    },
+    {
+      "at": "2026-09-25T12:35:24.8335328Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 84299,
+      "failedCommands": 0,
+      "notifications": 84278
+    },
+    {
+      "at": "2026-09-25T12:35:29.8338592Z",
+      "pendingOutbox": 3,
+      "pendingCommands": 1,
+      "completedCommands": 84549,
+      "failedCommands": 0,
+      "notifications": 84527
+    },
+    {
+      "at": "2026-09-25T12:35:34.8334022Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 84799,
+      "failedCommands": 0,
+      "notifications": 84778
+    },
+    {
+      "at": "2026-09-25T12:35:39.8335167Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 85049,
+      "failedCommands": 0,
+      "notifications": 85028
+    },
+    {
+      "at": "2026-09-25T12:35:44.8335096Z",
+      "pendingOutbox": 6,
+      "pendingCommands": 1,
+      "completedCommands": 85299,
+      "failedCommands": 0,
+      "notifications": 85273
+    },
+    {
+      "at": "2026-09-25T12:35:49.8336827Z",
+      "pendingOutbox": 6,
+      "pendingCommands": 1,
+      "completedCommands": 85549,
+      "failedCommands": 0,
+      "notifications": 85524
+    },
+    {
+      "at": "2026-09-25T12:35:54.8336465Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 85799,
+      "failedCommands": 0,
+      "notifications": 85778
+    },
+    {
+      "at": "2026-09-25T12:35:59.8338755Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 1,
+      "completedCommands": 86049,
+      "failedCommands": 0,
+      "notifications": 86028
+    },
+    {
+      "at": "2026-09-25T12:36:04.8335341Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 86299,
+      "failedCommands": 0,
+      "notifications": 86278
+    },
+    {
+      "at": "2026-09-25T12:36:09.8334016Z",
+      "pendingOutbox": 5,
+      "pendingCommands": 1,
+      "completedCommands": 86549,
+      "failedCommands": 0,
+      "notifications": 86524
+    },
+    {
+      "at": "2026-09-25T12:36:14.8335692Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 86799,
+      "failedCommands": 0,
+      "notifications": 86777
+    },
+    {
+      "at": "2026-09-25T12:36:19.8342091Z",
+      "pendingOutbox": 6,
+      "pendingCommands": 1,
+      "completedCommands": 87049,
+      "failedCommands": 0,
+      "notifications": 87023
+    },
+    {
+      "at": "2026-09-25T12:36:24.8335767Z",
+      "pendingOutbox": 5,
+      "pendingCommands": 1,
+      "completedCommands": 87299,
+      "failedCommands": 0,
+      "notifications": 87274
+    },
+    {
+      "at": "2026-09-25T12:36:29.8336578Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 87549,
+      "failedCommands": 0,
+      "notifications": 87528
+    },
+    {
+      "at": "2026-09-25T12:36:34.8335883Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 87799,
+      "failedCommands": 0,
+      "notifications": 87778
+    },
+    {
+      "at": "2026-09-25T12:36:39.8337068Z",
+      "pendingOutbox": 5,
+      "pendingCommands": 1,
+      "completedCommands": 88049,
+      "failedCommands": 0,
+      "notifications": 88023
+    },
+    {
+      "at": "2026-09-25T12:36:44.8337834Z",
+      "pendingOutbox": 3,
+      "pendingCommands": 1,
+      "completedCommands": 88299,
+      "failedCommands": 0,
+      "notifications": 88276
+    },
+    {
+      "at": "2026-09-25T12:36:49.8335043Z",
+      "pendingOutbox": 4,
+      "pendingCommands": 1,
+      "completedCommands": 88549,
+      "failedCommands": 0,
+      "notifications": 88524
+    },
+    {
+      "at": "2026-09-25T12:36:54.8337206Z",
+      "pendingOutbox": 1,
+      "pendingCommands": 1,
+      "completedCommands": 88799,
+      "failedCommands": 0,
+      "notifications": 88777
+    },
+    {
+      "at": "2026-09-25T12:36:59.8335245Z",
+      "pendingOutbox": 6,
+      "pendingCommands": 1,
+      "completedCommands": 89049,
+      "failedCommands": 0,
+      "notifications": 89023
+    },
+    {
+      "at": "2026-09-25T12:37:04.8339715Z",
+      "pendingOutbox": 5,
+      "pendingCommands": 1,
+      "completedCommands": 89299,
+      "failedCommands": 0,
+      "notifications": 89274
+    },
+    {
+      "at": "2026-09-25T12:37:09.8338113Z",
+      "pendingOutbox": 4,
+      "pendingCommands": 1,
+      "completedCommands": 89549,
+      "failedCommands": 0,
+      "notifications": 89524
+    },
+    {
+      "at": "2026-09-25T12:37:14.8339259Z",
+      "pendingOutbox": 3,
+      "pendingCommands": 1,
+      "completedCommands": 89799,
+      "failedCommands": 0,
+      "notifications": 89776
+    },
+    {
+      "at": "2026-09-25T12:37:19.8333585Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 90049,
+      "failedCommands": 0,
+      "notifications": 90026
+    },
+    {
+      "at": "2026-09-25T12:37:24.8335992Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 90299,
+      "failedCommands": 0,
+      "notifications": 90277
+    },
+    {
+      "at": "2026-09-25T12:37:29.8334797Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 90549,
+      "failedCommands": 0,
+      "notifications": 90527
+    },
+    {
+      "at": "2026-09-25T12:37:34.833709Z",
+      "pendingOutbox": 2,
+      "pendingCommands": 1,
+      "completedCommands": 90799,
+      "failedCommands": 0,
+      "notifications": 90778
+    },
+    {
+      "at": "2026-09-25T12:37:39.8336137Z",
+      "pendingOutbox": 5,
+      "pendingCommands": 1,
+      "completedCommands": 91049,
+      "failedCommands": 0,
+      "notifications": 91024
+    },
+    {
+      "at": "2026-09-25T12:37:44.8337891Z",
+      "pendingOutbox": 4,
+      "pendingCommands": 1,
+      "completedCommands": 91299,
+      "failedCommands": 0,
+      "notifications": 91274
+    },
+    {
+      "at": "2026-09-25T12:37:49.8338003Z",
+      "pendingOutbox": 4,
+      "pendingCommands": 1,
+      "completedCommands": 91549,
+      "failedCommands": 0,
+      "notifications": 91524
+    },
+    {
+      "at": "2026-09-25T12:37:54.8337843Z",
+      "pendingOutbox": 3,
+      "pendingCommands": 2,
+      "completedCommands": 91798,
+      "failedCommands": 0,
+      "notifications": 91776
+    },
+    {
+      "at": "2026-09-25T12:37:54.9323418Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 91800,
+      "failedCommands": 0,
+      "notifications": 91779
+    },
+    {
+      "at": "2026-09-25T12:37:55.0407846Z",
+      "pendingOutbox": 0,
+      "pendingCommands": 0,
+      "completedCommands": 91800,
+      "failedCommands": 0,
+      "notifications": 91779
+    }
+  ],
+  "drainSeconds": 0.1479136,
+  "CommandsCreated": 9000,
+  "CommandsCompleted": 9000,
+  "CommandsFailed": 0,
+  "AcceptedAsync": 9000,
+  "AcceptedAsyncCompleted": 9000,
+  "CommandCompletionMS": {
+    "count": 9000,
+    "P50": 18,
+    "P95": 53,
+    "P99": 68,
+    "Max": 371
+  }
+}

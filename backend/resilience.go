@@ -206,6 +206,7 @@ func (l *memoryLimiter) take(key string, max int64, window time.Duration, now ti
 }
 
 type appRuntime struct {
+	publisher                                                       commandPublisher
 	cfg                                                             Config
 	flights                                                         flightGroup
 	breaker                                                         circuitBreaker
@@ -214,6 +215,7 @@ type appRuntime struct {
 	dbSlots                                                         chan struct{}
 	rankMu                                                          sync.Mutex
 	ranks                                                           map[string]FeedSnapshot
+	rankRefreshing                                                  map[string]bool
 	detailLoads, sharedLoads, staleReads, redisFailures, rankBuilds atomic.Uint64
 }
 

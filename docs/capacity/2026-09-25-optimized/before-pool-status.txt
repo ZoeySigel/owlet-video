@@ -1,0 +1,8 @@
+Variable_name	Value
+Com_commit	225911
+Com_stmt_close	1262773
+Com_stmt_execute	1262775
+Com_stmt_prepare	1265017
+Connections	20396
+Threads_connected	11
+Threads_created	1335

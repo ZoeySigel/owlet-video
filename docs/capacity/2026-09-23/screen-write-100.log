@@ -1,0 +1,1 @@
+write target=100 sent=3000 success=3000 errors=0 dropped=0 p95=3075.3ms p99=3725.2ms drain=30.2s

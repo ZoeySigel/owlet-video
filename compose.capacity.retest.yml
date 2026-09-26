@@ -1,0 +1,5 @@
+# Preserve the original measurement database; seed a fresh relative-time fixture.
+# docker compose -f compose.capacity.yml -f compose.capacity.retest.yml up -d --wait api
+volumes:
+  capacity_mysql:
+    name: owlet-capacity-retest-20260925
