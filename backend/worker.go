@@ -358,6 +358,15 @@ func (a *App) processEvent(ctx context.Context, e event) error {
 	// Cache and realtime signals are optional side effects. A Redis outage must
 	// not dead-letter an event whose durable notification already committed.
 	if e.Kind == "video.published" {
+		if a.core != nil {
+			var v Video
+			if err := a.db.WithContext(ctx).First(&v, eventUint(e, "videoId")).Error; err != nil {
+				return err
+			}
+			if err := a.publishCoreVideo(v); err != nil {
+				return err
+			}
+		}
 		a.invalidateTimeline(0)
 		_, _ = a.timeline(ctx, 0, 0)
 	}

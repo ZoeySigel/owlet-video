@@ -1,6 +1,7 @@
 .env
 *.local
 data/
+data-core/
 artifact/
 release.tar.gz
 backend/data/

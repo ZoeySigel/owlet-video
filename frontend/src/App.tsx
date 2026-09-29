@@ -27,6 +27,7 @@ import {
   useResource,
 } from "./ui";
 import Publish from "./Publish";
+import CorePlayback from "./CorePlayback";
 
 type View =
   | "home"
@@ -38,8 +39,9 @@ type View =
   | "notices"
   | "settings"
   | "liked"
+  | "favorites"
   | "tag";
-type Sort = "latest" | "hot" | "likes" | "following";
+type Sort = "latest" | "hot" | "likes" | "following" | "recommend";
 type Route = {
   view: View;
   id?: string;
@@ -54,6 +56,7 @@ type Common = {
   requireUser: () => boolean;
 };
 const sorts: [Sort, string][] = [
+  ["recommend", "为你推荐"],
   ["latest", "最新"],
   ["hot", "热门"],
   ["likes", "最多点赞"],
@@ -69,6 +72,7 @@ const titles: Record<View, string> = {
   notices: "通知",
   settings: "设置",
   liked: "我的喜欢",
+  favorites: "我的收藏",
   tag: "话题",
 };
 function parseRoute(): Route {
@@ -87,6 +91,7 @@ function parseRoute(): Route {
 export default function App() {
   const [route, setRoute] = useState<Route>({ view: "home", sort: "latest" });
   const [user, setUser] = useState<User | null>(null);
+  const capabilities = useResource<{ favorites: boolean }>("/capabilities");
   const [ready, setReady] = useState(false);
   const [routeReady, setRouteReady] = useState(false);
   const [noticeCount, setNoticeCount] = useState(0);
@@ -188,6 +193,7 @@ export default function App() {
       view: "liked",
       active: route.view === "liked",
     },
+    ...(capabilities.data?.favorites ? [{ label: "我的收藏", icon: "heart", view: "favorites" as View, active: route.view === "favorites" }] : []),
     {
       label: "私信",
       icon: "message",
@@ -322,7 +328,7 @@ export default function App() {
           <>
             {route.view === "home" && (
               <Home
-                key={`${route.sort}-${route.sort === "following" ? user?.id || "guest" : "public"}`}
+                key={`${route.sort}-${route.sort === "following" || route.sort === "recommend" ? user?.id || "guest" : "public"}`}
                 sort={route.sort || "latest"}
                 {...props}
               />
@@ -357,6 +363,7 @@ export default function App() {
               <Settings refreshUser={refreshUser} {...props} />
             )}
             {route.view === "liked" && <Collection mode="liked" {...props} />}
+            {route.view === "favorites" && <Collection mode="favorites" {...props} />}
             {route.view === "tag" && (
               <Collection
                 key={route.tag}
@@ -393,6 +400,7 @@ function LoginRequired({ navigate }: Pick<Common, "navigate">) {
 }
 
 function Home({ sort, navigate, user }: Common & { sort: Sort }) {
+  const capabilities = useResource<{ recommendation: boolean }>("/capabilities");
   const cached = cachedPublic<Feed>(`/videos?sort=${sort}`);
   const [items, setItems] = useState<Video[]>(cached?.items || []);
   const [cursor, setCursor] = useState(cached?.nextCursor || "");
@@ -439,7 +447,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
     },
     [sort],
   );
-  const canLoad = sort !== "following" || !!user;
+  const canLoad = (sort !== "following" && sort !== "recommend") || !!user;
   useEffect(() => {
     active.current = true;
     if (canLoad) void load();
@@ -465,7 +473,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
       </PageHeading>
       <div className="feed-toolbar">
         <div className="tabs" aria-label="视频排序">
-          {sorts.map(([value, label]) => (
+          {sorts.filter(([value]) => value !== "recommend" || capabilities.data?.recommendation).map(([value, label]) => (
             <button
               key={value}
               aria-pressed={sort === value}
@@ -481,7 +489,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
           视频列表
         </span>
       </div>
-      {sort === "following" && !user ? (
+      {(sort === "following" || sort === "recommend") && !user ? (
         <LoginRequired navigate={navigate} />
       ) : (
         <>
@@ -579,6 +587,8 @@ function Watch({
   user,
   requireUser,
 }: Common & { id?: string }) {
+  const capabilities = useResource<{ favorites: boolean; recommendation: boolean }>("/capabilities");
+  const favoriteState = useResource<{ favorited: boolean }>(id && user && capabilities.data?.favorites ? "/videos/" + id + "/favorite" : null);
   const video = useResource<Video>(id ? "/videos/" + id : null);
   const comments = useResource<Comment[]>(
     id ? "/videos/" + id + "/comments" : null,
@@ -658,8 +668,10 @@ function Watch({
       <div className="watch-layout">
         <div className="watch-main">
           <div className="player">
-            <video
+            <CorePlayback
               key={playerKey}
+              videoId={v.id}
+              enabled={!!user && !!capabilities.data?.recommendation}
               src={v.playUrl}
               poster={v.coverUrl || undefined}
               controls
@@ -718,6 +730,20 @@ function Watch({
                 <Icon name="heart" />
                 {v.likesCount} 点赞
               </Button>
+              {capabilities.data?.favorites && <Button
+                variant="secondary"
+                aria-pressed={!!favoriteState.data?.favorited}
+                disabled={busy || (!!user && (favoriteState.loading || !!favoriteState.error))}
+                onClick={async () => {
+                  if (!requireUser() || busy) return;
+                  setBusy(true);
+                  try {
+                    const result = await api<{ favorited: boolean; favoritesCount: number }>("/videos/" + id + "/favorite", { method: favoriteState.data?.favorited ? "DELETE" : "PUT" });
+                    favoriteState.setData(result);
+                    video.setData(old => old ? { ...old, favoritesCount: result.favoritesCount } : old);
+                  } catch (error) { alert(errorMessage(error)); } finally { setBusy(false); }
+                }}
+              >{favoriteState.data?.favorited ? "已收藏" : "收藏"} · {v.favoritesCount || 0}</Button>}
               <Button
                 variant="secondary"
                 onClick={async () => {
@@ -1512,23 +1538,23 @@ function Collection({
   tag,
   navigate,
   user,
-}: Common & { mode: "liked" | "tag"; tag?: string }) {
+}: Common & { mode: "liked" | "favorites" | "tag"; tag?: string }) {
   const videos = useResource<Video[]>(
-    mode === "liked"
+    mode !== "tag"
       ? user
-        ? "/me/likes"
+        ? mode === "favorites" ? "/me/favorites" : "/me/likes"
         : null
       : tag
         ? "/tags/" + encodeURIComponent(tag) + "/videos"
         : null,
   );
-  if (mode === "liked" && !user) return <LoginRequired navigate={navigate} />;
+  if (mode !== "tag" && !user) return <LoginRequired navigate={navigate} />;
   return (
     <section>
       <PageHeading
-        title={mode === "liked" ? "我的喜欢" : "#" + (tag || "话题")}
+        title={mode === "favorites" ? "我的收藏" : mode === "liked" ? "我的喜欢" : "#" + (tag || "话题")}
         description={
-          mode === "liked" ? "你点赞过的视频。" : "浏览此话题下的视频。"
+          mode === "favorites" ? "你收藏的视频。" : mode === "liked" ? "你点赞过的视频。" : "浏览此话题下的视频。"
         }
       />
       {videos.loading ? (
@@ -1542,9 +1568,9 @@ function Collection({
         />
       ) : (
         <Empty
-          title={mode === "liked" ? "暂无喜欢的视频" : "暂无相关视频"}
+          title={mode === "favorites" ? "暂无收藏的视频" : mode === "liked" ? "暂无喜欢的视频" : "暂无相关视频"}
           body={
-            mode === "liked"
+            mode === "favorites" ? "收藏后，视频会显示在这里。" : mode === "liked"
               ? "点赞后，视频会显示在这里。"
               : "此话题下还没有视频。"
           }

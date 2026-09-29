@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Forced SSH command: receive one validated release and atomically switch it."""
 import os
+import json
 import pathlib
 import re
 import shutil
@@ -28,7 +29,8 @@ def healthy():
         try:
             worker = subprocess.run(['/usr/bin/systemctl', 'is-active', '--quiet', 'owlet-video-worker.service'])
             with urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2) as response:
-                if response.status == 200 and worker.returncode == 0:
+                payload = json.load(response)
+                if response.status == 200 and worker.returncode == 0 and payload.get('status') == 'ok' and payload.get('writes', {}).get('status', 'ok') == 'ok':
                     return True
         except Exception:
             pass
@@ -106,6 +108,8 @@ def main():
                 rollback.symlink_to(old)
                 os.replace(rollback, CURRENT)
                 restart()
+                if not healthy():
+                    raise RuntimeError('rollback health check failed')
             raise
         print(f'deployed {revision}')
     finally:

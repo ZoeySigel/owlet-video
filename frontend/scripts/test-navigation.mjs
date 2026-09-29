@@ -42,11 +42,11 @@ test("public cache expires and explicit reload bypasses it", async () => {
 test("private resources and following feed are never cached", async () => {
   let requests = 0;
   globalThis.fetch = async () => { requests++; return response({}); };
-  for (const path of ["/messages", "/notifications", "/auth/me", "/videos/1/like", "/videos?sort=following", "/me/likes"]) {
+  for (const path of ["/messages", "/notifications", "/auth/me", "/videos/1/like", "/videos?sort=following", "/me/likes", "/videos?sort=recommend", "/videos/1/favorite"]) {
     await readResource(path); await readResource(path);
     assert.equal(cachedPublic(path), null);
   }
-  assert.equal(requests, 12);
+  assert.equal(requests, 16);
 });
 test("mutations invalidate cached content and fence older in-flight reads", async () => {
   let release;

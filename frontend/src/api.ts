@@ -1,5 +1,5 @@
 export type User = { id: number; username: string; bio: string; avatarUrl: string; createdAt: string };
-export type Video = { id: number; userId: number; author: User; title: string; description: string; playUrl: string; coverUrl: string; likesCount: number; commentsCount: number; popularity: number; publishedAt: string };
+export type Video = { id: number; userId: number; author: User; title: string; description: string; playUrl: string; coverUrl: string; likesCount: number; commentsCount: number; favoritesCount?: number; popularity: number; publishedAt: string };
 export type Comment = { id: number; userId: number; author: User; videoId: number; body: string; createdAt: string };
 export type Message = { id: number; senderId: number; recipientId: number; body: string; createdAt: string };
 export type Notice = { id: number; userId: number; actorId: number; videoId?: number; kind: string; body: string; readAt?: string; createdAt: string };

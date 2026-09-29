@@ -1,0 +1,21 @@
+package domainfeed
+
+import "context"
+
+// Repository 定义 Feed 读取需要的持久化能力。
+type Repository interface {
+	// ListTimelinePage 按发布时间倒序读取轻量 Feed 页。
+	ListTimelinePage(ctx context.Context, cursor *TimelineCursor, limit int) ([]*FeedPageItem, error)
+	// ListHotPage 按热度分倒序读取轻量 Feed 页。
+	ListHotPage(ctx context.Context, cursor *HotCursor, limit int) ([]*FeedPageItem, error)
+	// ListFollowingPage 按发布时间倒序读取当前用户关注流，包含普通作者 inbox 和大 V 拉取结果。
+	ListFollowingPage(ctx context.Context, viewerID int64, cursor *TimelineCursor, limit int) ([]*FeedPageItem, error)
+	// ListFollowingPullAuthorIDs 查询当前用户关注的大 V 作者 ID，用于合并 Redis author outbox。
+	ListFollowingPullAuthorIDs(ctx context.Context, viewerID int64) ([]int64, error)
+	// BatchGetFeedCards 批量读取视频卡片展示字段。
+	BatchGetFeedCards(ctx context.Context, videoIDs []int64) (map[int64]*FeedCard, error)
+	// BatchGetFeedStats 批量读取视频互动计数。
+	BatchGetFeedStats(ctx context.Context, videoIDs []int64) (map[int64]*FeedStat, error)
+	// BatchGetViewerActionStates 批量读取当前用户对视频的点赞和收藏状态。
+	BatchGetViewerActionStates(ctx context.Context, viewerID int64, videoIDs []int64) (map[int64]*ViewerActionState, error)
+}

@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-09-27T07:17:23.424453+00:00",
+  "containers": [
+    {
+      "name": "/owlet-capacity-api-1",
+      "cpuset": "0,1",
+      "memoryLimit": 201326592,
+      "oomKilled": false,
+      "restartCount": 0
+    },
+    {
+      "name": "/owlet-capacity-worker-1",
+      "cpuset": "0,1",
+      "memoryLimit": 201326592,
+      "oomKilled": false,
+      "restartCount": 0
+    },
+    {
+      "name": "/owlet-capacity-mysql-1",
+      "cpuset": "0,1",
+      "memoryLimit": 536870912,
+      "oomKilled": false,
+      "restartCount": 0
+    },
+    {
+      "name": "/owlet-capacity-redis-1",
+      "cpuset": "0,1",
+      "memoryLimit": 134217728,
+      "oomKilled": false,
+      "restartCount": 0
+    },
+    {
+      "name": "/owlet-capacity-rabbitmq-1",
+      "cpuset": "0,1",
+      "memoryLimit": 402653184,
+      "oomKilled": false,
+      "restartCount": 0
+    }
+  ],
+  "queues": [
+    "name\tmessages_ready\tmessages_unacknowledged",
+    "owlet.retry\t0\t0",
+    "owlet.dead\t0\t0",
+    "owlet.events\t0\t0"
+  ],
+  "database": [
+    "8.0.46\t134217728\t30\t0",
+    "201\t8982",
+    "0"
+  ]
+}

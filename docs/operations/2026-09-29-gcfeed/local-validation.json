@@ -1,0 +1,13 @@
+{
+  "requests": 40,
+  "concurrency": 6,
+  "errors": 0,
+  "p95ms": 2078.683899999305,
+  "maxMs": 2087.9889000025287,
+  "brokerRecovery": true,
+  "servicesRestarted": [
+    "/owlet-gcfeed-api-1",
+    "/owlet-gcfeed-worker-1"
+  ],
+  "favoriteAfterRecovery": true
+}

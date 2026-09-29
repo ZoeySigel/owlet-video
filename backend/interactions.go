@@ -126,6 +126,10 @@ func (a *App) publishCommand(ctx context.Context, e event) (result error) {
 }
 
 func (a *App) interaction(c *gin.Context, kind string) {
+	if a.core != nil {
+		a.coreInteraction(c, kind)
+		return
+	}
 	target, ok := paramID(c, "id")
 	if !ok {
 		return

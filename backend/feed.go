@@ -48,6 +48,10 @@ func makeCursor(score float64, id uint) string {
 }
 
 func (a *App) feed(c *gin.Context) {
+	if a.core != nil && c.Query("sort") != "likes" {
+		a.coreFeed(c)
+		return
+	}
 	sort := c.DefaultQuery("sort", "latest")
 	if sort != "latest" && sort != "hot" && sort != "likes" && sort != "following" {
 		errorJSON(c, 400, "invalid_sort")

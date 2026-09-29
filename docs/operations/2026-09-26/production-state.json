@@ -1,0 +1,105 @@
+{
+  "release": "/srv/owlet-video/releases/3ca692e50b768cff773dd454169b6ade24b4bb28",
+  "services": {
+    "owlet-video-api": [
+      "NRestarts=0",
+      "MemoryCurrent=9199616",
+      "ActiveState=active",
+      "SubState=running"
+    ],
+    "owlet-video-worker": [
+      "NRestarts=0",
+      "MemoryCurrent=10661888",
+      "ActiveState=active",
+      "SubState=running"
+    ],
+    "caddy": [
+      "NRestarts=0",
+      "MemoryCurrent=51228672",
+      "ActiveState=active",
+      "SubState=running"
+    ],
+    "owlet-video-monitor.timer": [
+      "ActiveState=active",
+      "SubState=waiting"
+    ],
+    "owlet-video-backup.service": [
+      "NRestarts=0",
+      "MemoryCurrent=[not set]",
+      "ActiveState=inactive",
+      "SubState=dead"
+    ]
+  },
+  "memoryKiB": {
+    "MemTotal": 1651792,
+    "MemAvailable": 862260,
+    "SwapTotal": 2097148,
+    "SwapFree": 2097148
+  },
+  "diskFreeBytes": 32155947008,
+  "monitorState": {
+    "application": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "public_https": {
+      "failures": 0,
+      "successes": 1044,
+      "active": false
+    },
+    "owlet-video-api": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "owlet-video-worker": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "caddy": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "message_queues": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "backup_freshness": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "disk_space": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    },
+    "memory_headroom": {
+      "failures": 0,
+      "successes": 1053,
+      "active": false
+    }
+  },
+  "queues": [
+    "name\tmessages_ready\tmessages_unacknowledged",
+    "owlet.dead\t0\t0",
+    "owlet.retry\t0\t0",
+    "owlet.events\t0\t0"
+  ],
+  "backupResult": "Result=success\nExecMainStatus=0",
+  "monitorRecent": [
+    "Finished owlet-video-monitor.service - Owlet Video health, backlog, resource and backup checks.",
+    "Starting owlet-video-monitor.service - Owlet Video health, backlog, resource and backup checks...",
+    "(to rabbitmq) root on none",
+    "pam_unix(su:session): session opened for user rabbitmq(uid=114) by (uid=0)",
+    "pam_unix(su:session): session closed for user rabbitmq",
+    "{\"checks\": {\"application\": true, \"public_https\": true, \"owlet-video-api\": true, \"owlet-video-worker\": true, \"caddy\": true, \"message_queues\": true, \"backup_freshness\": true, \"disk_space\": true, \"memory_headroom\": true}, \"activeAlerts\": []}",
+    "owlet-video-monitor.service: Deactivated successfully.",
+    "Finished owlet-video-monitor.service - Owlet Video health, backlog, resource and backup checks."
+  ],
+  "observedAt": "2026-09-27T07:17:37.492266+00:00"
+}

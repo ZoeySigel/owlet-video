@@ -15,6 +15,7 @@ jobs:
           MYSQL_USER: owlet_test
           MYSQL_PASSWORD: test-password
           MYSQL_ROOT_PASSWORD: test-root-password
+          MYSQL_ROOT_HOST: '%'
         ports: ['3306:3306']
         options: >-
           --health-cmd="mysqladmin ping -h localhost -u root -ptest-root-password --silent"
@@ -47,6 +48,9 @@ jobs:
           TEST_MYSQL_DSN: owlet_test:test-password@tcp(127.0.0.1:3306)/owlet_video_test?parseTime=True&charset=utf8mb4&loc=UTC
           TEST_REDIS_ADDR: 127.0.0.1:6379
           TEST_RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672/
+          CORE_TEST_MYSQL_DSN: root:test-root-password@tcp(127.0.0.1:3306)/mysql?parseTime=True&charset=utf8mb4&loc=UTC
+          CORE_TEST_REDIS_ADDR: 127.0.0.1:6379
+          CORE_TEST_RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672/
         run: go test -race -count=1 ./...
   frontend:
     runs-on: ubuntu-24.04

@@ -1,0 +1,28 @@
+# Local approximation of the deployed two-core, ~1.6 GiB server. All services
+# share two CPUs; database/cache settings match production. This is NOT a
+# production endpoint test, nor does it include the OS, Caddy or TLS overhead.
+services:
+  mysql:
+    image: mysql:8.0.46
+    cpuset: "0,1"
+    mem_limit: 512m
+    command: ["--innodb-buffer-pool-size=128M", "--max-connections=30", "--performance-schema=OFF"]
+  redis:
+    cpuset: "0,1"
+    mem_limit: 128m
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+  rabbitmq:
+    cpuset: "0,1"
+    mem_limit: 384m
+    volumes: ["./scripts/capacity/rabbit-production.conf:/etc/rabbitmq/conf.d/20-capacity.conf:ro"]
+  api:
+    cpuset: "0,1"
+    mem_limit: 192m
+  worker:
+    cpuset: "0,1"
+    mem_limit: 192m
+    environment:
+      GOMAXPROCS: '2'
+volumes:
+  capacity_mysql:
+    name: owlet-capacity-production-20260926

@@ -26,21 +26,22 @@ type Session struct {
 	CreatedAt   time.Time
 }
 type Video struct {
-	ID            uint      `gorm:"primaryKey" json:"id"`
-	UserID        uint      `gorm:"index:idx_video_user_published;not null" json:"userId"`
-	User          User      `gorm:"foreignKey:UserID" json:"author"`
-	Title         string    `gorm:"size:160;not null" json:"title"`
-	Description   string    `gorm:"size:2000" json:"description"`
-	FilePath      string    `gorm:"size:300;not null" json:"-"`
-	Size          int64     `gorm:"not null" json:"size"`
-	CoverPath     string    `gorm:"size:300" json:"-"`
-	PlayURL       string    `gorm:"-" json:"playUrl"`
-	CoverURL      string    `gorm:"-" json:"coverUrl"`
-	LikesCount    int64     `gorm:"not null;default:0;index:idx_video_likes" json:"likesCount"`
-	CommentsCount int64     `gorm:"not null;default:0" json:"commentsCount"`
-	Popularity    float64   `gorm:"not null;default:0;index:idx_video_popularity" json:"popularity"`
-	PublishedAt   time.Time `gorm:"index:idx_video_user_published;index:idx_video_published" json:"publishedAt"`
-	CreatedAt     time.Time `json:"-"`
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	UserID         uint      `gorm:"index:idx_video_user_published;not null" json:"userId"`
+	User           User      `gorm:"foreignKey:UserID" json:"author"`
+	Title          string    `gorm:"size:160;not null" json:"title"`
+	Description    string    `gorm:"size:2000" json:"description"`
+	FilePath       string    `gorm:"size:300;not null" json:"-"`
+	Size           int64     `gorm:"not null" json:"size"`
+	CoverPath      string    `gorm:"size:300" json:"-"`
+	PlayURL        string    `gorm:"-" json:"playUrl"`
+	CoverURL       string    `gorm:"-" json:"coverUrl"`
+	LikesCount     int64     `gorm:"not null;default:0;index:idx_video_likes" json:"likesCount"`
+	CommentsCount  int64     `gorm:"not null;default:0" json:"commentsCount"`
+	FavoritesCount int64     `gorm:"->;-:migration" json:"favoritesCount"`
+	Popularity     float64   `gorm:"not null;default:0;index:idx_video_popularity" json:"popularity"`
+	PublishedAt    time.Time `gorm:"index:idx_video_user_published;index:idx_video_published" json:"publishedAt"`
+	CreatedAt      time.Time `json:"-"`
 }
 type Upload struct {
 	ID         string `gorm:"primaryKey;size:36"`

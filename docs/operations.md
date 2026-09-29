@@ -65,3 +65,20 @@ API 每 5 秒检查压力，即使没有新请求也会输出状态变化和每 
 上述 SQL 指标不包含已发送至 RabbitMQ 的通知事件。还需监控 `owlet.events` 的 ready/unacknowledged 数量与最老消息，以及 `owlet.dead` 非零告警；不能仅凭 Outbox 为零判断消息处理完成。故障恢复后核对命令完成、Outbox、RabbitMQ 队列和死信，再恢复业务流量上限。
 
 会话鉴权回源同样使用 `DB_TIMEOUT`。有效凭据遇到数据库错误或超时，返回 `503/auth_unavailable` 与 `Retry-After: 1`；只有凭据无效、会话不存在、过期或撤销才返回 401。客户端不要因 503 清除登录状态。
+
+## 已部署的巡检
+
+2026-09-29 已完成 GCFeed 核心模式的生产迁移。当前业务库为 `owlet_gcfeed`，媒体目录为 `/var/lib/owlet-video-core`，巡检 vhost 改为 `owlet_gcfeed`，并检查核心 action 队列。备份脚本按 `BACKUP_DATABASE` 和 `DATA_DIR` 备份，包含上传临时目录。新备份已在云端独立临时库成功恢复校验。发布身份、数据数量、备份位置与切换后回滚限制见 [GCFeed 上线验收](operations/2026-09-29-gcfeed/report.md)。以下 9 月 26 日记录描述切换前状态。
+
+2026-09-26 已在生产安装 `owlet-video-monitor.timer`。约每分钟检查本地应用及公网 HTTPS 健康响应、API/Worker/Caddy 服务、RabbitMQ 的 `owlet_video` vhost 队列、备份新鲜度、磁盘和内存。连续 3 次失败记录告警，连续 3 次成功记录恢复；执行耗时和 timer 精度使触发时间略大于 3 分钟。
+
+当前告警仅写入服务器 journald，尚未配置手机或邮件通知。查看运行状态和告警：
+
+```sh
+systemctl list-timers owlet-video-monitor.timer
+journalctl -u owlet-video-monitor.service --since today
+```
+
+检查阈值：死信必须为零，事件与重试队列 ready/unacknowledged 总数小于 200；非空数据库备份距今小于 36 小时；根分区空闲至少 8 GiB；可用内存至少 160 MiB，已用 swap 小于 256 MiB。备份新鲜度检查不能替代恢复演练，队列数量检查不提供最老消息年龄。监控与业务同机，整机失联仍需要服务器外的探测及通知渠道。
+
+部署入口现在解析健康 JSON，HTTP 200 但依赖或写入降级会判定发布失败；回滚后还会验证旧版本健康。验证记录见 [2026-09-26 部署后验收](operations/2026-09-26/report.md)。本次只在隔离环境演练版本回滚，未切换生产版本；数据库恢复在无网络的临时数据库内进行，未覆盖生产数据。

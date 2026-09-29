@@ -1,0 +1,67 @@
+{
+  "at": "2026-09-26T12:37:52.060942+00:00",
+  "requests": [
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 9650,
+      "milliseconds": 1575.4
+    },
+    {
+      "path": "/livez",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 15,
+      "milliseconds": 848.7,
+      "health": {
+        "status": "ok"
+      }
+    },
+    {
+      "path": "/healthz",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 212,
+      "milliseconds": 823.2,
+      "health": {
+        "database": "ok",
+        "redis": "ok",
+        "status": "ok",
+        "writes": {
+          "checkedAt": "2026-09-26T20:37:43.369713849+08:00",
+          "oldestSeconds": 0,
+          "pendingCommandsCapped": 0,
+          "pendingOutboxCapped": 0,
+          "reason": "",
+          "rejected": 0,
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "path": "/api/v1/videos?sort=latest",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 8654,
+      "milliseconds": 863.4,
+      "itemCount": 20
+    },
+    {
+      "path": "/api/v1/videos?sort=hot",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 8914,
+      "milliseconds": 838.9,
+      "itemCount": 20
+    },
+    {
+      "path": "/api/v1/videos?sort=likes",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 9126,
+      "milliseconds": 1016.9,
+      "itemCount": 20
+    }
+  ]
+}

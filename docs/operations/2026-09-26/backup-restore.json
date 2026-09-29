@@ -1,0 +1,26 @@
+{
+  "backup": "20260926T123030Z",
+  "gzipChecksumVerified": true,
+  "databaseRestorePassed": true,
+  "network": "none",
+  "tables": {
+    "comments": 26,
+    "feed_snapshots": 30,
+    "follows": 15,
+    "interaction_commands": 0,
+    "invites": 7,
+    "likes": 79,
+    "messages": 1,
+    "notifications": 13,
+    "outboxes": 22,
+    "processed_events": 22,
+    "sessions": 10,
+    "uploads": 6,
+    "users": 12,
+    "video_tags": 44,
+    "videos": 30
+  },
+  "mediaFiles": 35,
+  "mediaBytes": 382383415,
+  "missingVideoFiles": 0
+}

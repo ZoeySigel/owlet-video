@@ -13,6 +13,7 @@ type Config struct {
 	MaxMediaBytes                                                                      int64
 	HotWindow, RankRefresh, SnapshotTTL, RedisTimeout, DBTimeout                       time.Duration
 	RankLimit                                                                          int
+	RedisDB                                                                            int
 	WriteRPS, WriteBurst, WriteMaxPending                                              int
 	WriteMaxAge                                                                        time.Duration
 }
@@ -31,6 +32,7 @@ func configFromEnv() Config {
 		MySQLDSN:        os.Getenv("MYSQL_DSN"),
 		RedisAddr:       env("REDIS_ADDR", "127.0.0.1:6379"),
 		RedisPassword:   os.Getenv("REDIS_PASSWORD"),
+		RedisDB:         intEnv("REDIS_DB", 0),
 		RabbitURL:       os.Getenv("RABBITMQ_URL"),
 		JWTSecret:       os.Getenv("JWT_SECRET"),
 		PublicURL:       strings.TrimRight(env("PUBLIC_URL", "http://localhost:3000"), "/"),

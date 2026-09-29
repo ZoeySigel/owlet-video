@@ -7,7 +7,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o /owlet-video .
 
 FROM alpine:3.21
-RUN addgroup -S owlet && adduser -S -G owlet owlet
+RUN addgroup -S -g 101 owlet && adduser -S -u 100 -G owlet owlet
 COPY --from=build /owlet-video /usr/local/bin/owlet-video
 USER owlet
 ENTRYPOINT ["/usr/local/bin/owlet-video"]

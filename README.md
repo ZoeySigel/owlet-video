@@ -8,6 +8,8 @@ Owlet Video 是一个前后端分离的视频分享应用，支持视频上传�
 
 [在线访问](https://owl-et.me) · [架构文档](docs/architecture.md) · [部署与恢复](docs/operations.md)
 
+已加入 GCFeed 核心后端模式：推荐、曝光去重、内容向量、关注分发、异步点赞/收藏、消息中心和播放 QoS。保留邀请码、刷新会话、分片续传、话题及私信。生产站点已于 2026-09-29 完成保留数据的迁移与上线，见[上线验收记录](docs/operations/2026-09-29-gcfeed/report.md)。其他环境需先迁移到独立数据库与媒体目录，再设置 `BACKEND_ENGINE=gcfeed`；未配置时默认仍运行旧后端，下面原有架构说明适用于旧模式。具体差异、启动和回滚步骤见 [GCFeed 迁移说明](docs/gcfeed-migration.md)。
+
 ## 功能
 
 | 模块 | 功能说明 |

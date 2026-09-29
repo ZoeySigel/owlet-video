@@ -1,0 +1,44 @@
+name: owlet-gcfeed
+services:
+  storage-init:
+    image: alpine:3.21
+    command: ["sh", "-c", "mkdir -p /data/media /data/tmp && chown -R 100:101 /data"]
+    volumes: ["./data-core:/data"]
+  mysql:
+    extends: { file: docker-compose.yml, service: mysql }
+    environment:
+      MYSQL_DATABASE: owlet_gcfeed
+      MYSQL_USER: owlet_core
+    ports: !override ["127.0.0.1:33306:3306"]
+  redis:
+    extends: { file: docker-compose.yml, service: redis }
+    ports: !override []
+  rabbitmq:
+    extends: { file: docker-compose.yml, service: rabbitmq }
+    ports: !override []
+  api:
+    extends: { file: docker-compose.yml, service: api }
+    environment: &core-env
+      BACKEND_ENGINE: gcfeed
+      MYSQL_DSN: owlet_core:${MYSQL_PASSWORD:-local-app-password}@tcp(mysql:3306)/owlet_gcfeed?charset=utf8mb4&parseTime=True&loc=UTC
+      JWT_SECRET: ${JWT_SECRET:?Set the existing JWT_SECRET to preserve sessions}
+      PUBLIC_URL: http://localhost:3001
+    volumes: !override ["./data-core:/var/lib/owlet-video"]
+    restart: unless-stopped
+    depends_on:
+      storage-init: { condition: service_completed_successfully }
+  worker:
+    extends: { file: docker-compose.yml, service: worker }
+    environment: *core-env
+    volumes: !override ["./data-core:/var/lib/owlet-video"]
+    restart: unless-stopped
+    depends_on:
+      storage-init: { condition: service_completed_successfully }
+  web:
+    extends: { file: docker-compose.yml, service: web }
+    ports: !override ["127.0.0.1:3001:80"]
+    volumes: !override ["./data-core/media:/var/lib/owlet-video/media:ro"]
+volumes:
+  mysql_data:
+  redis_data:
+  rabbit_data:

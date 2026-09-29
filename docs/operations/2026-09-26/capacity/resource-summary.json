@@ -1,0 +1,82 @@
+[
+  {
+    "stage": "server-profile-async-10",
+    "container": "owlet-capacity-api-1",
+    "samples": 43,
+    "cpuPercentMean": 4.858372093023256,
+    "cpuPercentMax": 9.76,
+    "memoryPercentMax": 7.02
+  },
+  {
+    "stage": "server-profile-async-10",
+    "container": "owlet-capacity-worker-1",
+    "samples": 43,
+    "cpuPercentMean": 6.6648837209302325,
+    "cpuPercentMax": 8.55,
+    "memoryPercentMax": 6.49
+  },
+  {
+    "stage": "server-profile-async-10",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 43,
+    "cpuPercentMean": 19.20767441860465,
+    "cpuPercentMax": 29.84,
+    "memoryPercentMax": 69.34
+  },
+  {
+    "stage": "server-profile-async-10",
+    "container": "owlet-capacity-redis-1",
+    "samples": 43,
+    "cpuPercentMean": 3.231860465116279,
+    "cpuPercentMax": 6.72,
+    "memoryPercentMax": 11.92
+  },
+  {
+    "stage": "server-profile-async-10",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 43,
+    "cpuPercentMean": 22.256976744186048,
+    "cpuPercentMax": 98.92,
+    "memoryPercentMax": 47.31
+  },
+  {
+    "stage": "server-profile-async-20",
+    "container": "owlet-capacity-api-1",
+    "samples": 42,
+    "cpuPercentMean": 13.157857142857143,
+    "cpuPercentMax": 31.17,
+    "memoryPercentMax": 10.47
+  },
+  {
+    "stage": "server-profile-async-20",
+    "container": "owlet-capacity-worker-1",
+    "samples": 42,
+    "cpuPercentMean": 17.706666666666667,
+    "cpuPercentMax": 27.01,
+    "memoryPercentMax": 6.72
+  },
+  {
+    "stage": "server-profile-async-20",
+    "container": "owlet-capacity-mysql-1",
+    "samples": 42,
+    "cpuPercentMean": 46.80571428571429,
+    "cpuPercentMax": 112.47,
+    "memoryPercentMax": 86.43
+  },
+  {
+    "stage": "server-profile-async-20",
+    "container": "owlet-capacity-redis-1",
+    "samples": 42,
+    "cpuPercentMean": 5.838571428571429,
+    "cpuPercentMax": 12.89,
+    "memoryPercentMax": 13.26
+  },
+  {
+    "stage": "server-profile-async-20",
+    "container": "owlet-capacity-rabbitmq-1",
+    "samples": 42,
+    "cpuPercentMean": 36.99690476190476,
+    "cpuPercentMax": 98.8,
+    "memoryPercentMax": 45.31
+  }
+]

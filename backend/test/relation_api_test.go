@@ -1,0 +1,583 @@
+package test
+
+import (
+	"context"
+	"net/http"
+	"sort"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	applicationrelation "github.com/ZoeySigel/owlet-video/backend/internal/application/relation"
+	domainfeed "github.com/ZoeySigel/owlet-video/backend/internal/domain/feed"
+	domainrelation "github.com/ZoeySigel/owlet-video/backend/internal/domain/relation"
+	infrajwt "github.com/ZoeySigel/owlet-video/backend/internal/infra/jwt"
+	interfaceshttpmiddleware "github.com/ZoeySigel/owlet-video/backend/internal/interfaces/http/middleware"
+	interfaceshttprelation "github.com/ZoeySigel/owlet-video/backend/internal/interfaces/http/relation"
+
+	"github.com/gin-gonic/gin"
+)
+
+type relationFollowAPIResponse struct {
+	UserID         int64 `json:"user_id"`
+	TargetUserID   int64 `json:"target_user_id"`
+	Status         int   `json:"status"`
+	Following      bool  `json:"following"`
+	FollowingCount int   `json:"following_count"`
+	FollowerCount  int   `json:"follower_count"`
+}
+
+type relationListAPIResponse struct {
+	Items      []relationUserAPIResponse `json:"items"`
+	NextCursor string                    `json:"next_cursor"`
+	HasMore    bool                      `json:"has_more"`
+}
+
+type relationUserAPIResponse struct {
+	UserID     int64     `json:"user_id"`
+	Nickname   string    `json:"nickname"`
+	AvatarURL  string    `json:"avatar_url"`
+	Bio        string    `json:"bio"`
+	FollowedAt time.Time `json:"followed_at"`
+}
+
+type memoryRelationUser struct {
+	ID        int64
+	Nickname  string
+	AvatarURL string
+	Bio       string
+	Active    bool
+}
+
+// memoryRelationRepo 是关系测试用内存仓储，模拟关注状态、计数和分页。
+type memoryRelationRepo struct {
+	mu       sync.Mutex
+	nextID   int64
+	users    map[int64]memoryRelationUser
+	follows  map[string]*domainrelation.Follow
+	stats    map[int64]*domainrelation.RelationStat
+	clockSeq int64
+}
+
+type memoryFollowFeedBackfiller struct {
+	mu            sync.Mutex
+	followerCount int
+	items         []*domainfeed.FeedPageItem
+	writes        []backfillWrite
+}
+
+type memoryRelationMessageWriter struct {
+	mu       sync.Mutex
+	messages []memoryRelationMessage
+	seen     map[string]struct{}
+}
+
+type memoryRelationMessage struct {
+	UserID         int64
+	Type           string
+	Title          string
+	EventID        string
+	ActorID        int64
+	ActorNickname  string
+	ActorAvatarURL string
+}
+
+type backfillWrite struct {
+	AuthorID int64
+	UserIDs  []int64
+	VideoID  int64
+	MaxLen   int64
+}
+
+func newMemoryRelationRepo() *memoryRelationRepo {
+	return &memoryRelationRepo{
+		nextID: 1,
+		users: map[int64]memoryRelationUser{
+			42: {ID: 42, Nickname: "viewer", AvatarURL: "https://example.com/42.jpg", Bio: "viewer bio", Active: true},
+			77: {ID: 77, Nickname: "creator", AvatarURL: "https://example.com/77.jpg", Bio: "creator bio", Active: true},
+			88: {ID: 88, Nickname: "maker", AvatarURL: "https://example.com/88.jpg", Bio: "maker bio", Active: true},
+			99: {ID: 99, Nickname: "guest", AvatarURL: "https://example.com/99.jpg", Bio: "guest bio", Active: true},
+		},
+		follows: map[string]*domainrelation.Follow{},
+		stats:   map[int64]*domainrelation.RelationStat{},
+	}
+}
+
+// SetFollow 模拟关注/取关事务，并维护双方统计。
+func (r *memoryRelationRepo) SetFollow(ctx context.Context, userID int64, targetUserID int64, active bool, idempotencyKey string) (*domainrelation.Follow, *domainrelation.RelationStat, *domainrelation.RelationStat, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if !r.userActive(userID) || !r.userActive(targetUserID) {
+		return nil, nil, nil, domainrelation.ErrTargetUserNotFound
+	}
+
+	key := memoryRelationKey(userID, targetUserID)
+	follow, exists := r.follows[key]
+	if exists && idempotencyKey != "" && follow.IdempotencyKey == strings.TrimSpace(idempotencyKey) {
+		return cloneFollow(follow), cloneStat(r.ensureStat(userID)), cloneStat(r.ensureStat(targetUserID)), nil
+	}
+
+	nextStatus := domainrelation.FollowStatusCanceled
+	if active {
+		nextStatus = domainrelation.FollowStatusActive
+	}
+
+	delta := 0
+	now := r.nextTime()
+	if !exists {
+		follow = &domainrelation.Follow{
+			ID:             r.nextID,
+			UserID:         userID,
+			TargetUserID:   targetUserID,
+			Status:         nextStatus,
+			IdempotencyKey: strings.TrimSpace(idempotencyKey),
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		r.nextID++
+		r.follows[key] = follow
+		if active {
+			delta = 1
+		}
+	} else {
+		if follow.Status != nextStatus {
+			if active {
+				delta = 1
+			} else {
+				delta = -1
+			}
+		}
+		follow.Status = nextStatus
+		follow.IdempotencyKey = strings.TrimSpace(idempotencyKey)
+		follow.UpdatedAt = now
+	}
+
+	if delta != 0 {
+		userStat := r.ensureStat(userID)
+		targetStat := r.ensureStat(targetUserID)
+		userStat.FollowingCount = clampMemoryCount(userStat.FollowingCount + delta)
+		targetStat.FollowerCount = clampMemoryCount(targetStat.FollowerCount + delta)
+	}
+	return cloneFollow(follow), cloneStat(r.ensureStat(userID)), cloneStat(r.ensureStat(targetUserID)), nil
+}
+
+// ListFollowing 模拟关注列表游标分页。
+func (r *memoryRelationRepo) ListFollowing(ctx context.Context, userID int64, cursor *domainrelation.ListCursor, limit int) ([]*domainrelation.UserItem, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	items := make([]*domainrelation.UserItem, 0)
+	for _, follow := range r.follows {
+		if follow.UserID != userID || follow.Status != domainrelation.FollowStatusActive {
+			continue
+		}
+		if cursor != nil && !beforeRelationCursor(follow.UpdatedAt, follow.TargetUserID, cursor) {
+			continue
+		}
+		user := r.users[follow.TargetUserID]
+		items = append(items, domainrelation.RestoreUserItem(user.ID, user.Nickname, user.AvatarURL, user.Bio, follow.UpdatedAt))
+	}
+	sortRelationItems(items)
+	return limitRelationItems(items, limit), nil
+}
+
+// ListFollowers 模拟粉丝列表游标分页。
+func (r *memoryRelationRepo) ListFollowers(ctx context.Context, userID int64, cursor *domainrelation.ListCursor, limit int) ([]*domainrelation.UserItem, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	items := make([]*domainrelation.UserItem, 0)
+	for _, follow := range r.follows {
+		if follow.TargetUserID != userID || follow.Status != domainrelation.FollowStatusActive {
+			continue
+		}
+		if cursor != nil && !beforeRelationCursor(follow.UpdatedAt, follow.UserID, cursor) {
+			continue
+		}
+		user := r.users[follow.UserID]
+		items = append(items, domainrelation.RestoreUserItem(user.ID, user.Nickname, user.AvatarURL, user.Bio, follow.UpdatedAt))
+	}
+	sortRelationItems(items)
+	return limitRelationItems(items, limit), nil
+}
+
+// GetUserProfile 模拟读取关注通知触发用户资料。
+func (r *memoryRelationRepo) GetUserProfile(ctx context.Context, userID int64) (*domainrelation.UserProfile, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	user, exists := r.users[userID]
+	if !exists || !user.Active {
+		return nil, domainrelation.ErrTargetUserNotFound
+	}
+	return domainrelation.RestoreUserProfile(user.ID, user.Nickname, user.AvatarURL, user.Bio), nil
+}
+
+// TestRelationFollowFlow 覆盖关注、幂等重放、取关和重复取关。
+func TestRelationFollowFlow(t *testing.T) {
+	router, jwtManager := newRelationRouter(t)
+	token := signTestToken(t, jwtManager, 42)
+
+	followResponse := performVideoJSONRequest(router, http.MethodPut, "/api/users/me/following/77", "", token, "follow-1")
+	requireStatus(t, followResponse, http.StatusOK)
+
+	var followed relationFollowAPIResponse
+	decodeJSON(t, followResponse, &followed)
+	if followed.UserID != 42 || followed.TargetUserID != 77 || !followed.Following || followed.FollowingCount != 1 || followed.FollowerCount != 1 {
+		t.Fatalf("unexpected follow response: %+v", followed)
+	}
+
+	replayResponse := performVideoJSONRequest(router, http.MethodPut, "/api/users/me/following/77", "", token, "follow-1")
+	requireStatus(t, replayResponse, http.StatusOK)
+
+	var replayed relationFollowAPIResponse
+	decodeJSON(t, replayResponse, &replayed)
+	if !replayed.Following || replayed.FollowingCount != 1 || replayed.FollowerCount != 1 {
+		t.Fatalf("unexpected replay response: %+v", replayed)
+	}
+
+	unfollowResponse := performVideoJSONRequest(router, http.MethodDelete, "/api/users/me/following/77", "", token, "unfollow-1")
+	requireStatus(t, unfollowResponse, http.StatusOK)
+
+	var unfollowed relationFollowAPIResponse
+	decodeJSON(t, unfollowResponse, &unfollowed)
+	if unfollowed.Following || unfollowed.FollowingCount != 0 || unfollowed.FollowerCount != 0 {
+		t.Fatalf("unexpected unfollow response: %+v", unfollowed)
+	}
+
+	repeatUnfollowResponse := performVideoJSONRequest(router, http.MethodDelete, "/api/users/me/following/77", "", token, "unfollow-2")
+	requireStatus(t, repeatUnfollowResponse, http.StatusOK)
+
+	var repeatUnfollow relationFollowAPIResponse
+	decodeJSON(t, repeatUnfollowResponse, &repeatUnfollow)
+	if repeatUnfollow.Following || repeatUnfollow.FollowingCount != 0 || repeatUnfollow.FollowerCount != 0 {
+		t.Fatalf("unexpected repeat unfollow response: %+v", repeatUnfollow)
+	}
+}
+
+// TestRelationFollowBackfillsSmallCreatorInbox 覆盖新关注小作者后把近期作品回填到当前用户 inbox。
+func TestRelationFollowBackfillsSmallCreatorInbox(t *testing.T) {
+	repo := newMemoryRelationRepo()
+	backfiller := &memoryFollowFeedBackfiller{
+		followerCount: 3,
+		items: []*domainfeed.FeedPageItem{
+			{VideoID: 101, AuthorID: 77, PublishedAt: time.Date(2026, 5, 4, 12, 0, 0, 0, time.UTC)},
+			{VideoID: 100, AuthorID: 77, PublishedAt: time.Date(2026, 5, 4, 11, 0, 0, 0, time.UTC)},
+		},
+	}
+	service := applicationrelation.New(repo, applicationrelation.WithFollowFeedBackfiller(backfiller))
+
+	result, err := service.Follow(context.Background(), 42, 77, "follow-backfill")
+	if err != nil {
+		t.Fatalf("follow with backfill: %v", err)
+	}
+	if !result.Following {
+		t.Fatalf("expected active follow: %+v", result)
+	}
+
+	writes := backfiller.Writes()
+	if len(writes) != 2 {
+		t.Fatalf("unexpected backfill writes: %+v", writes)
+	}
+	if writes[0].AuthorID != 77 || writes[0].VideoID != 101 || len(writes[0].UserIDs) != 1 || writes[0].UserIDs[0] != 42 {
+		t.Fatalf("unexpected first backfill write: %+v", writes[0])
+	}
+	if writes[0].MaxLen != 1000 {
+		t.Fatalf("unexpected inbox max len: %d", writes[0].MaxLen)
+	}
+}
+
+// TestRelationFollowSkipsBigCreatorInboxBackfill 覆盖大作者关注流继续走 outbox 拉模式。
+func TestRelationFollowSkipsBigCreatorInboxBackfill(t *testing.T) {
+	repo := newMemoryRelationRepo()
+	backfiller := &memoryFollowFeedBackfiller{
+		followerCount: domainfeed.BigCreatorFollowerThreshold,
+		items: []*domainfeed.FeedPageItem{
+			{VideoID: 101, AuthorID: 77, PublishedAt: time.Date(2026, 5, 4, 12, 0, 0, 0, time.UTC)},
+		},
+	}
+	service := applicationrelation.New(repo, applicationrelation.WithFollowFeedBackfiller(backfiller))
+
+	if _, err := service.Follow(context.Background(), 42, 77, "follow-big"); err != nil {
+		t.Fatalf("follow big creator: %v", err)
+	}
+	if len(backfiller.Writes()) != 0 {
+		t.Fatalf("unexpected big creator inbox backfill: %+v", backfiller.Writes())
+	}
+}
+
+// TestRelationMessageWriter 覆盖关注成功后给被关注用户写消息。
+func TestRelationMessageWriter(t *testing.T) {
+	repo := newMemoryRelationRepo()
+	writer := newMemoryRelationMessageWriter()
+	service := applicationrelation.New(repo, applicationrelation.WithMessageWriter(writer))
+
+	if _, err := service.Follow(context.Background(), 42, 77, "follow-message-1"); err != nil {
+		t.Fatalf("follow: %v", err)
+	}
+	if _, err := service.Follow(context.Background(), 42, 77, "follow-message-1"); err != nil {
+		t.Fatalf("follow replay: %v", err)
+	}
+	if _, err := service.Unfollow(context.Background(), 42, 77, "unfollow-message-1"); err != nil {
+		t.Fatalf("unfollow: %v", err)
+	}
+
+	messages := writer.Messages()
+	if len(messages) != 1 {
+		t.Fatalf("expected 1 message, got %+v", messages)
+	}
+	if messages[0].UserID != 77 || messages[0].Type != "FOLLOW" {
+		t.Fatalf("unexpected follow message: %+v", messages[0])
+	}
+	if messages[0].ActorID != 42 || messages[0].ActorNickname != "viewer" || messages[0].ActorAvatarURL != "https://example.com/42.jpg" {
+		t.Fatalf("unexpected follow actor: %+v", messages[0])
+	}
+}
+
+// TestRelationListFlow 覆盖关注列表、粉丝列表和游标分页。
+func TestRelationListFlow(t *testing.T) {
+	router, jwtManager := newRelationRouter(t)
+	viewerToken := signTestToken(t, jwtManager, 42)
+	creatorToken := signTestToken(t, jwtManager, 77)
+	makerToken := signTestToken(t, jwtManager, 88)
+
+	requireStatus(t, performVideoJSONRequest(router, http.MethodPut, "/api/users/me/following/77", "", viewerToken, "follow-77"), http.StatusOK)
+	requireStatus(t, performVideoJSONRequest(router, http.MethodPut, "/api/users/me/following/88", "", viewerToken, "follow-88"), http.StatusOK)
+	requireStatus(t, performVideoJSONRequest(router, http.MethodPut, "/api/users/me/following/77", "", makerToken, "maker-follow-77"), http.StatusOK)
+	requireStatus(t, performVideoJSONRequest(router, http.MethodPut, "/api/users/me/following/42", "", creatorToken, "creator-follow-42"), http.StatusOK)
+
+	firstFollowingResponse := performJSONRequest(router, http.MethodGet, "/api/users/me/following?limit=1", "", viewerToken)
+	requireStatus(t, firstFollowingResponse, http.StatusOK)
+
+	var firstFollowing relationListAPIResponse
+	decodeJSON(t, firstFollowingResponse, &firstFollowing)
+	if len(firstFollowing.Items) != 1 || firstFollowing.Items[0].UserID != 88 || !firstFollowing.HasMore || firstFollowing.NextCursor == "" {
+		t.Fatalf("unexpected first following page: %+v", firstFollowing)
+	}
+
+	secondFollowingResponse := performJSONRequest(router, http.MethodGet, "/api/users/me/following?limit=1&cursor="+firstFollowing.NextCursor, "", viewerToken)
+	requireStatus(t, secondFollowingResponse, http.StatusOK)
+
+	var secondFollowing relationListAPIResponse
+	decodeJSON(t, secondFollowingResponse, &secondFollowing)
+	if len(secondFollowing.Items) != 1 || secondFollowing.Items[0].UserID != 77 || secondFollowing.HasMore {
+		t.Fatalf("unexpected second following page: %+v", secondFollowing)
+	}
+
+	followersResponse := performJSONRequest(router, http.MethodGet, "/api/users/me/followers?limit=10", "", creatorToken)
+	requireStatus(t, followersResponse, http.StatusOK)
+
+	var followers relationListAPIResponse
+	decodeJSON(t, followersResponse, &followers)
+	if len(followers.Items) != 2 || followers.Items[0].UserID != 88 || followers.Items[1].UserID != 42 {
+		t.Fatalf("unexpected followers page: %+v", followers)
+	}
+}
+
+// TestRelationValidation 覆盖未登录、参数错误、自关注和目标用户缺失。
+func TestRelationValidation(t *testing.T) {
+	router, jwtManager := newRelationRouter(t)
+	token := signTestToken(t, jwtManager, 42)
+
+	unauthorizedResponse := performJSONRequest(router, http.MethodPut, "/api/users/me/following/77", "", "")
+	requireStatus(t, unauthorizedResponse, http.StatusUnauthorized)
+
+	badTargetResponse := performJSONRequest(router, http.MethodPut, "/api/users/me/following/0", "", token)
+	requireStatus(t, badTargetResponse, http.StatusBadRequest)
+
+	selfFollowResponse := performJSONRequest(router, http.MethodPut, "/api/users/me/following/42", "", token)
+	requireStatus(t, selfFollowResponse, http.StatusBadRequest)
+
+	missingTargetResponse := performJSONRequest(router, http.MethodPut, "/api/users/me/following/404", "", token)
+	requireStatus(t, missingTargetResponse, http.StatusNotFound)
+
+	badLimitResponse := performJSONRequest(router, http.MethodGet, "/api/users/me/following?limit=0", "", token)
+	requireStatus(t, badLimitResponse, http.StatusBadRequest)
+
+	badCursorResponse := performJSONRequest(router, http.MethodGet, "/api/users/me/followers?cursor=bad", "", token)
+	requireStatus(t, badCursorResponse, http.StatusBadRequest)
+}
+
+func newRelationRouter(t *testing.T) (*gin.Engine, *infrajwt.Manager) {
+	t.Helper()
+
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+
+	jwtManager, err := infrajwt.NewManager("test-secret", "15m")
+	if err != nil {
+		t.Fatalf("new jwt manager: %v", err)
+	}
+
+	repo := newMemoryRelationRepo()
+	service := applicationrelation.New(repo)
+	handler := interfaceshttprelation.New(service)
+	authMiddleware := interfaceshttpmiddleware.NewJWTAuth(jwtManager)
+
+	api := router.Group("/api")
+	users := api.Group("/users")
+	users.PUT("/me/following/:targetUserId", authMiddleware, handler.Follow)
+	users.DELETE("/me/following/:targetUserId", authMiddleware, handler.Unfollow)
+	users.GET("/me/following", authMiddleware, handler.ListFollowing)
+	users.GET("/me/followers", authMiddleware, handler.ListFollowers)
+
+	return router, jwtManager
+}
+
+func (r *memoryRelationRepo) userActive(userID int64) bool {
+	user, exists := r.users[userID]
+	return exists && user.Active
+}
+
+func (r *memoryRelationRepo) ensureStat(userID int64) *domainrelation.RelationStat {
+	stat, exists := r.stats[userID]
+	if exists {
+		return stat
+	}
+	stat = &domainrelation.RelationStat{UserID: userID}
+	r.stats[userID] = stat
+	return stat
+}
+
+func (r *memoryRelationRepo) nextTime() time.Time {
+	r.clockSeq++
+	return time.Date(2026, 5, 4, 12, 0, 0, 0, time.UTC).Add(time.Duration(r.clockSeq) * time.Second)
+}
+
+func memoryRelationKey(userID int64, targetUserID int64) string {
+	return int64String(userID) + ":" + int64String(targetUserID)
+}
+
+func beforeRelationCursor(followedAt time.Time, userID int64, cursor *domainrelation.ListCursor) bool {
+	return followedAt.Before(cursor.FollowedAt) || (followedAt.Equal(cursor.FollowedAt) && userID < cursor.UserID)
+}
+
+func sortRelationItems(items []*domainrelation.UserItem) {
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].FollowedAt.Equal(items[j].FollowedAt) {
+			return items[i].UserID > items[j].UserID
+		}
+		return items[i].FollowedAt.After(items[j].FollowedAt)
+	})
+}
+
+func limitRelationItems(items []*domainrelation.UserItem, limit int) []*domainrelation.UserItem {
+	if limit > len(items) {
+		limit = len(items)
+	}
+	return items[:limit]
+}
+
+func cloneFollow(follow *domainrelation.Follow) *domainrelation.Follow {
+	cloned := *follow
+	return &cloned
+}
+
+func cloneStat(stat *domainrelation.RelationStat) *domainrelation.RelationStat {
+	cloned := *stat
+	return &cloned
+}
+
+func (b *memoryFollowFeedBackfiller) CountFollowers(ctx context.Context, authorID int64) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.followerCount, nil
+}
+
+func (b *memoryFollowFeedBackfiller) ListAuthorRecentVideos(ctx context.Context, authorID int64, limit int) ([]*domainfeed.FeedPageItem, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	items := make([]*domainfeed.FeedPageItem, 0, len(b.items))
+	for _, item := range b.items {
+		if item == nil || item.AuthorID != authorID {
+			continue
+		}
+		value := *item
+		items = append(items, &value)
+		if limit > 0 && len(items) >= limit {
+			break
+		}
+	}
+	return items, nil
+}
+
+func (b *memoryFollowFeedBackfiller) AddInboxItems(ctx context.Context, authorID int64, userIDs []int64, item *domainfeed.FeedPageItem, maxLen int64) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.writes = append(b.writes, backfillWrite{
+		AuthorID: authorID,
+		UserIDs:  append([]int64(nil), userIDs...),
+		VideoID:  item.VideoID,
+		MaxLen:   maxLen,
+	})
+	return nil
+}
+
+func (b *memoryFollowFeedBackfiller) Writes() []backfillWrite {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	writes := make([]backfillWrite, 0, len(b.writes))
+	for _, write := range b.writes {
+		write.UserIDs = append([]int64(nil), write.UserIDs...)
+		writes = append(writes, write)
+	}
+	return writes
+}
+
+func newMemoryRelationMessageWriter() *memoryRelationMessageWriter {
+	return &memoryRelationMessageWriter{
+		messages: []memoryRelationMessage{},
+		seen:     map[string]struct{}{},
+	}
+}
+
+func (w *memoryRelationMessageWriter) CreateFromEvent(ctx context.Context, userID int64, messageType string, title string, content string, eventID string, idempotencyKey string) (any, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if _, exists := w.seen[eventID]; exists {
+		return nil, nil
+	}
+	w.seen[eventID] = struct{}{}
+	w.messages = append(w.messages, memoryRelationMessage{
+		UserID:  userID,
+		Type:    messageType,
+		Title:   title,
+		EventID: eventID,
+	})
+	return nil, nil
+}
+
+func (w *memoryRelationMessageWriter) CreateFromActorEvent(ctx context.Context, userID int64, messageType string, title string, content string, eventID string, idempotencyKey string, actorID int64, actorNickname string, actorAvatarURL string) (any, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if _, exists := w.seen[eventID]; exists {
+		return nil, nil
+	}
+	w.seen[eventID] = struct{}{}
+	w.messages = append(w.messages, memoryRelationMessage{
+		UserID:         userID,
+		Type:           messageType,
+		Title:          title,
+		EventID:        eventID,
+		ActorID:        actorID,
+		ActorNickname:  actorNickname,
+		ActorAvatarURL: actorAvatarURL,
+	})
+	return nil, nil
+}
+
+func (w *memoryRelationMessageWriter) Messages() []memoryRelationMessage {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	items := make([]memoryRelationMessage, len(w.messages))
+	copy(items, w.messages)
+	return items
+}
+
+var _ domainrelation.Repository = (*memoryRelationRepo)(nil)

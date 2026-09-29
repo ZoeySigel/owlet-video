@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -28,9 +29,17 @@ type App struct {
 	redis       *redis.Client
 	runtimeOnce sync.Once
 	runtime     *appRuntime
+	core        *coreServices
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "migrate-core" {
+		apply := len(os.Args) > 2 && os.Args[2] == "apply"
+		if err := migrateCore(context.Background(), apply); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	cfg := configFromEnv().defaults()
 	if len(cfg.JWTSecret) < 32 || cfg.MySQLDSN == "" || cfg.RabbitURL == "" {
 		log.Fatal("JWT_SECRET (32+ chars), MYSQL_DSN and RABBITMQ_URL are required")
@@ -45,7 +54,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := db.AutoMigrate(&InteractionCommand{}, &User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}); err != nil {
+	coreMode := os.Getenv("BACKEND_ENGINE") == "gcfeed"
+	if coreMode {
+		err = coreReady(db)
+	} else {
+		err = db.AutoMigrate(&InteractionCommand{}, &User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{})
+	}
+	if err != nil {
 		log.Fatal(err)
 	}
 	sqlDB, err := db.DB()
@@ -58,10 +73,28 @@ func main() {
 	sqlDB.SetMaxIdleConns(16)
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
-	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr, Password: cfg.RedisPassword, PoolSize: 8, DialTimeout: cfg.RedisTimeout, ReadTimeout: cfg.RedisTimeout, WriteTimeout: cfg.RedisTimeout, PoolTimeout: cfg.RedisTimeout, MaxRetries: -1, ContextTimeoutEnabled: true})
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr, Password: cfg.RedisPassword, DB: cfg.RedisDB, PoolSize: 8, DialTimeout: cfg.RedisTimeout, ReadTimeout: cfg.RedisTimeout, WriteTimeout: cfg.RedisTimeout, PoolTimeout: cfg.RedisTimeout, MaxRetries: -1, ContextTimeoutEnabled: true})
 	app := &App{cfg: cfg, db: db, redis: rdb}
+	if coreMode {
+		if err := app.initCore(); err != nil {
+			log.Fatal(err)
+		}
+		defer app.core.mq.Close()
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	var coreDisconnected atomic.Bool
+	if coreMode {
+		go func() {
+			select {
+			case <-ctx.Done():
+			case <-app.core.mq.Done():
+				log.Print("core broker disconnected; shutting down for supervisor restart")
+				coreDisconnected.Store(true)
+				stop()
+			}
+		}()
+	}
 	defer sqlDB.Close()
 	defer rdb.Close()
 	defer app.state().publisher.close()
@@ -89,7 +122,11 @@ func main() {
 			log.Fatal(err)
 		}
 	case "worker":
-		if err := app.runWorker(ctx); err != nil && ctx.Err() == nil {
+		work := app.runWorker
+		if app.core != nil {
+			work = app.coreWorker
+		}
+		if err := work(ctx); err != nil && ctx.Err() == nil {
 			log.Fatal(err)
 		}
 	case "invite":
@@ -104,6 +141,9 @@ func main() {
 			log.Fatal(err)
 		}
 	case "seed":
+		if coreMode {
+			log.Fatal("seed legacy fixtures before migration; core database seeding is not supported")
+		}
 		if os.Getenv("SEED_TEST_DATA") != "1" {
 			log.Fatal("seed requires SEED_TEST_DATA=1")
 		}
@@ -112,6 +152,9 @@ func main() {
 		}
 	default:
 		log.Fatal("mode must be api, worker, invite, cleanup, or seed")
+	}
+	if coreDisconnected.Load() {
+		log.Fatal("core broker connection lost")
 	}
 }
 
@@ -124,6 +167,13 @@ func currentID(c *gin.Context) uint { return c.MustGet("userID").(uint) }
 func (a *App) router() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger(), a.sameOrigin())
+	if a.core != nil {
+		a.coreRoutes(r)
+	} else {
+		r.GET("/api/v1/capabilities", func(c *gin.Context) {
+			c.JSON(200, gin.H{"engine": "legacy", "recommendation": false, "favorites": false})
+		})
+	}
 	_ = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
 	r.GET("/livez", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 	r.GET("/healthz", a.health)

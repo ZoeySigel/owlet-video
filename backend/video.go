@@ -360,7 +360,13 @@ func (a *App) publishVideo(c *gin.Context) {
 	}
 	v := Video{UserID: currentID(c), Title: strings.TrimSpace(body.Title), Description: body.Description, FilePath: rel, CoverPath: coverPath, Size: u.Size, PublishedAt: time.Now()}
 	err := a.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&v).Error; err != nil {
+		var createErr error
+		if a.core != nil {
+			createErr = a.createCoreVideo(tx, &v)
+		} else {
+			createErr = tx.Create(&v).Error
+		}
+		if err := createErr; err != nil {
 			return err
 		}
 		seen := map[string]bool{}

@@ -104,6 +104,9 @@ rabbitmqctl set_permissions -p owlet_video owlet_video '.*' '.*' '.*'
 
 install -d -o root -g root -m 0755 /usr/local/libexec
 install -o root -g root -m 0755 "$repo/deploy/deploy.py" /usr/local/libexec/owlet-video-deploy.py
+install -o root -g root -m 0755 "$repo/deploy/monitor.py" /usr/local/libexec/owlet-video-monitor.py
+install -o root -g root -m 0644 "$repo/deploy/owlet-video-monitor.service" /etc/systemd/system/owlet-video-monitor.service
+install -o root -g root -m 0644 "$repo/deploy/owlet-video-monitor.timer" /etc/systemd/system/owlet-video-monitor.timer
 install -o root -g root -m 0755 "$repo/deploy/backup.sh" /usr/local/sbin/owlet-video-backup
 install -o root -g root -m 0644 "$repo/deploy/owlet-video-api.service" /etc/systemd/system/owlet-video-api.service
 install -o root -g root -m 0644 "$repo/deploy/owlet-video-worker.service" /etc/systemd/system/owlet-video-worker.service
@@ -124,4 +127,5 @@ visudo -cf /etc/sudoers.d/owlet-video-ci
 systemctl daemon-reload
 systemctl enable owlet-video-api.service owlet-video-worker.service owlet-video-backup.timer
 systemctl start owlet-video-backup.timer
+systemctl enable --now owlet-video-monitor.timer
 echo 'Provisioned. Deploy a release, then enable/start Caddy after health checks.'

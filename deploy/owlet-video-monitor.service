@@ -1,0 +1,15 @@
+[Unit]
+Description=Owlet Video health, backlog, resource and backup checks
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/owlet-video/monitor.env
+ExecStart=/usr/bin/python3 /usr/local/libexec/owlet-video-monitor.py
+StateDirectory=owlet-video-monitor
+UMask=0077
+Nice=10
+TimeoutStartSec=45
+PrivateTmp=true
+ProtectHome=read-only
+NoNewPrivileges=true
