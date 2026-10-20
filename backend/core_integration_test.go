@@ -154,7 +154,7 @@ func TestCoreMigrationAndCompatibility(t *testing.T) {
 	if err := a.initCore(); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { a.core.mq.Close(); a.state().publisher.close() })
+	t.Cleanup(func() { a.core.mq.Close() })
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- a.coreWorker(ctx) }()
@@ -280,4 +280,13 @@ func TestCoreMigrationAndCompatibility(t *testing.T) {
 func TestCoreMigrationOlderSchema(t *testing.T) {
 	t.Setenv("CORE_TEST_LEGACY_SCHEMA", "1")
 	TestCoreMigrationAndCompatibility(t)
+}
+
+// Source-only ranking snapshot schema used by migration fixtures.
+type FeedSnapshot struct {
+	ID        string `gorm:"primaryKey;size:36"`
+	Sort      string `gorm:"size:16;not null"`
+	Entries   []byte `gorm:"type:mediumblob;not null"`
+	CreatedAt time.Time
+	ExpiresAt time.Time `gorm:"index;not null"`
 }

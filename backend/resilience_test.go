@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func TestFlightCancellationAndCoalescing(t *testing.T) {
@@ -110,29 +108,5 @@ func TestLocalLimitBudgetAndBound(t *testing.T) {
 	}
 	if ok, err := l.take("recovered", 1, time.Hour, now.Add(2*time.Hour)); !ok || err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestRankCursorIntegrity(t *testing.T) {
-	a := &App{cfg: Config{JWTSecret: "test-only-signing-secret-with-32-characters"}}
-	c := rankCursor{1, "hot", uuid.NewString(), 20, time.Now().Add(time.Minute).Unix()}
-	raw := a.signRankCursor(c)
-	if got, err := a.parseRankCursor(raw, "hot"); err != nil || got != c {
-		t.Fatal(got, err)
-	}
-	if _, err := a.parseRankCursor(raw, "likes"); err == nil {
-		t.Fatal("cross-sort cursor accepted")
-	}
-	if _, err := a.parseRankCursor(raw+"x", "hot"); err == nil {
-		t.Fatal("tampered cursor accepted")
-	}
-	c.Expires = time.Now().Add(-time.Second).Unix()
-	if _, err := a.parseRankCursor(a.signRankCursor(c), "hot"); !errors.Is(err, errCursorExpired) {
-		t.Fatal(err)
-	}
-	c.Expires = time.Now().Add(time.Minute).Unix()
-	c.Offset = 21
-	if _, err := a.parseRankCursor(a.signRankCursor(c), "hot"); err == nil {
-		t.Fatal("unaligned cursor accepted")
 	}
 }

@@ -1,3 +1,5 @@
+> 历史归档：本文记录旧后端，相关旧实现与压测工具已移除。当前后端见 [GCFeed 架构](architecture.md)。
+
 # 后端亮点对照与使用
 
 对照基准：[feedsystem_video_go 的亮点解析](https://github.com/LeoninCS/feedsystem_video_go/blob/main/feedsystem_video_go项目设计.md)。下面对应其 21 项亮点，描述 Owlet 的实际代码与使用边界。接口路径、存储模型和默认参数不要求与参考项目逐字相同。

@@ -10,9 +10,9 @@ spec.loader.exec_module(monitor)
 class MonitorTests(unittest.TestCase):
     def test_core_queue_backlog_is_monitored(self):
         rows = '\n'.join(name+' 0 0' for name in ('owlet.events','owlet.retry','owlet.dead','owlet.core.action_changed','owlet.core.published','owlet.core.embedding'))
-        self.assertTrue(monitor.queues_healthy(rows, True))
-        self.assertFalse(monitor.queues_healthy(rows.replace('owlet.core.embedding 0 0','owlet.core.embedding 200 0'), True))
-        self.assertFalse(monitor.queues_healthy('owlet.events 0 0\nowlet.retry 0 0\nowlet.dead 0 0', True))
+        self.assertTrue(monitor.queues_healthy(rows))
+        self.assertFalse(monitor.queues_healthy(rows.replace('owlet.core.embedding 0 0','owlet.core.embedding 200 0')))
+        self.assertFalse(monitor.queues_healthy('owlet.events 0 0\nowlet.retry 0 0\nowlet.dead 0 0'))
     def test_failure_and_recovery_hysteresis(self):
         state = {}
         for i in range(3):

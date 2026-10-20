@@ -32,13 +32,14 @@ if [[ ! -f /etc/owlet-video/app.env ]]; then
   jwtsecret=$(openssl rand -hex 32)
   cat > /etc/owlet-video/app.env <<EOF
 ADDR=127.0.0.1:8080
-MYSQL_DSN='owlet_video:${dbpass}@tcp(127.0.0.1:3306)/owlet_video?charset=utf8mb4&parseTime=True&loc=UTC'
+MYSQL_DSN='owlet_video:${dbpass}@tcp(127.0.0.1:3306)/owlet_gcfeed?charset=utf8mb4&parseTime=True&loc=UTC'
 REDIS_ADDR=127.0.0.1:6379
 REDIS_PASSWORD=${redispass}
-RABBITMQ_URL='amqp://owlet_video:${rabbitpass}@127.0.0.1:5672/owlet_video'
+RABBITMQ_URL='amqp://owlet_video:${rabbitpass}@127.0.0.1:5672/owlet_gcfeed'
 JWT_SECRET=${jwtsecret}
 PUBLIC_URL=https://owl-et.me
 DATA_DIR=/var/lib/owlet-video
+BACKUP_DATABASE=owlet_gcfeed
 SECURE_COOKIES=true
 MAX_MEDIA_BYTES=8589934592
 EOF
@@ -70,10 +71,10 @@ EOF
 systemctl enable --now mysql
 systemctl restart mysql
 mysql <<SQL
-CREATE DATABASE IF NOT EXISTS owlet_video CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS owlet_gcfeed CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'owlet_video'@'127.0.0.1' IDENTIFIED BY '${dbpass}';
 ALTER USER 'owlet_video'@'127.0.0.1' IDENTIFIED BY '${dbpass}';
-GRANT ALL PRIVILEGES ON owlet_video.* TO 'owlet_video'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON owlet_gcfeed.* TO 'owlet_video'@'127.0.0.1';
 SQL
 
 if ! grep -q '^# owlet-video settings$' /etc/redis/redis.conf; then
@@ -98,9 +99,9 @@ EOF
 fi
 systemctl enable --now rabbitmq-server
 systemctl restart rabbitmq-server
-rabbitmqctl add_vhost owlet_video 2>/dev/null || true
+rabbitmqctl add_vhost owlet_gcfeed 2>/dev/null || true
 rabbitmqctl add_user owlet_video "$rabbitpass" 2>/dev/null || rabbitmqctl change_password owlet_video "$rabbitpass"
-rabbitmqctl set_permissions -p owlet_video owlet_video '.*' '.*' '.*'
+rabbitmqctl set_permissions -p owlet_gcfeed owlet_video '.*' '.*' '.*'
 
 install -d -o root -g root -m 0755 /usr/local/libexec
 install -o root -g root -m 0755 "$repo/deploy/deploy.py" /usr/local/libexec/owlet-video-deploy.py
@@ -128,4 +129,4 @@ systemctl daemon-reload
 systemctl enable owlet-video-api.service owlet-video-worker.service owlet-video-backup.timer
 systemctl start owlet-video-backup.timer
 systemctl enable --now owlet-video-monitor.timer
-echo 'Provisioned. Deploy a release, then enable/start Caddy after health checks.'
+echo 'Provisioned. After installing the first release, run owlet-video init-core with app.env before starting API/Worker; then enable/start Caddy after health checks.'

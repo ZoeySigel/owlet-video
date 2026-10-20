@@ -10,11 +10,10 @@ import urllib.request
 
 STATE = Path('/var/lib/owlet-video-monitor/state.json')
 
-def queues_healthy(rows, core=False):
+def queues_healthy(rows):
     queues = {parts[0]: int(parts[1])+int(parts[2]) for line in rows.splitlines() if len(parts := line.split()) == 3 and parts[0].startswith('owlet.')}
     required = ['owlet.events', 'owlet.retry', 'owlet.dead']
-    if core:
-        required += ['owlet.core.action_changed', 'owlet.core.published', 'owlet.core.embedding']
+    required += ['owlet.core.action_changed', 'owlet.core.published', 'owlet.core.embedding']
     return all(name in queues for name in required) and queues['owlet.dead'] == 0 and sum(queues.values()) < 200
 
 
@@ -32,14 +31,14 @@ def collect():
     def health(url='http://127.0.0.1:8080/healthz'):
         with urllib.request.urlopen(url, timeout=3) as response:
             value = json.load(response)
-        return value.get('status') == 'ok' and value.get('writes', {}).get('status') == 'ok'
+        return value.get('status') == 'ok'
     check('application', health)
     check('public_https', lambda: health('https://owl-et.me/healthz'))
     for service in ('owlet-video-api', 'owlet-video-worker', 'caddy'):
         check(service, lambda s=service: run(['systemctl', 'is-active', s]).strip() == 'active')
     def queues():
-        rows = run(['rabbitmqctl', '-q', 'list_queues', '-p', os.environ.get('RABBITMQ_VHOST', 'owlet_video'), 'name', 'messages_ready', 'messages_unacknowledged'])
-        return queues_healthy(rows, os.environ.get('BACKEND_ENGINE') == 'gcfeed')
+        rows = run(['rabbitmqctl', '-q', 'list_queues', '-p', os.environ.get('RABBITMQ_VHOST', 'owlet_gcfeed'), 'name', 'messages_ready', 'messages_unacknowledged'])
+        return queues_healthy(rows)
     check('message_queues', queues)
     def backup():
         files = list(Path('/var/backups/owlet-video').glob('20*/mysql.sql.gz'))

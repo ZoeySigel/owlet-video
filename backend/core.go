@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -98,7 +99,7 @@ func (a *App) coreWorker(ctx context.Context) error {
 			log.Printf("worker metrics: %v", err)
 		}
 	}()
-	// Legacy outbox handles only retained extension events in core mode.
+	// The extension outbox reliably relays uploaded video publication to GCFeed.
 	return a.runWorker(ctx)
 }
 
@@ -332,3 +333,5 @@ func (a *App) publishCoreVideo(v Video) error {
 	e := &video.PublishedEvent{EventID: fmt.Sprintf("owlet-video:%d", v.ID), VideoID: int64(v.ID), AuthorID: int64(v.UserID), Title: v.Title, Description: v.Description, MediaURL: mediaURL(v.FilePath), CoverURL: mediaURL(v.CoverPath), PublishedAt: v.PublishedAt, OccurredAt: time.Now()}
 	return a.core.mq.PublishVideoPublished(context.Background(), e)
 }
+
+var mentionPattern = regexp.MustCompile(`@[a-zA-Z0-9_]{3,40}`)

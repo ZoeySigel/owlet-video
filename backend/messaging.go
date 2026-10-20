@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 func (a *App) conversations(c *gin.Context) {
@@ -111,25 +111,12 @@ func (a *App) markNotificationsRead(c *gin.Context) {
 		errorJSON(c, 400, "invalid_request")
 		return
 	}
-	if a.core != nil {
-		var ids []int64
-		if body.ID != nil {
-			ids = []int64{int64(*body.ID)}
-		}
-		if _, err := a.core.message.MarkRead(c.Request.Context(), int64(currentID(c)), ids); err != nil {
-			coreError(c, err)
-			return
-		}
-		c.JSON(200, gin.H{"ok": true})
-		return
-	}
-	q := a.db.Model(&Notification{}).Where("user_id = ? AND read_at IS NULL", currentID(c))
+	var ids []int64
 	if body.ID != nil {
-		q = q.Where("id = ?", *body.ID)
+		ids = []int64{int64(*body.ID)}
 	}
-	now := time.Now()
-	if q.Update("read_at", &now).Error != nil {
-		errorJSON(c, 500, "update_failed")
+	if _, err := a.core.message.MarkRead(c.Request.Context(), int64(currentID(c)), ids); err != nil {
+		coreError(c, err)
 		return
 	}
 	c.JSON(200, gin.H{"ok": true})

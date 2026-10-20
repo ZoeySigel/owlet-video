@@ -13,6 +13,15 @@ import (
 	"gorm.io/gorm"
 )
 
+func (a *App) invalidateAuthor(uid uint) {
+	var ids []uint
+	if a.db.Model(&Video{}).Where("user_id = ?", uid).Pluck("id", &ids).Error == nil {
+		for _, id := range ids {
+			a.invalidateVideo(id)
+		}
+	}
+}
+
 var releaseVideoLock = redis.NewScript(`if redis.call('GET',KEYS[1]) == ARGV[1] then return redis.call('DEL',KEYS[1]) end; return 0`)
 var publishVideoCache = redis.NewScript(`if redis.call('GET',KEYS[2]) ~= ARGV[1] then return 0 end; redis.call('SET',KEYS[1],ARGV[2],'PX',ARGV[3]); redis.call('DEL',KEYS[2]); return 1`)
 var evictVideoCache = redis.NewScript(`return redis.call('DEL',KEYS[1],KEYS[2])`)

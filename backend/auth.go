@@ -153,13 +153,7 @@ func (a *App) register(c *gin.Context) {
 			return err
 		}
 		user = User{Username: body.Username, PasswordHash: string(hash)}
-		var createErr error
-		if a.core != nil {
-			createErr = a.createCoreUser(tx, &user)
-		} else {
-			createErr = tx.Create(&user).Error
-		}
-		if err := createErr; err != nil {
+		if err := a.createCoreUser(tx, &user); err != nil {
 			return err
 		}
 		return tx.Model(&invite).Update("used_by", user.ID).Error
@@ -306,7 +300,7 @@ func (a *App) updateMe(c *gin.Context) {
 		if err := tx.Model(&User{}).Where("id = ?", currentID(c)).Updates(updates).Error; err != nil {
 			return err
 		}
-		if a.core != nil && body.Username != nil {
+		if body.Username != nil {
 			if err := tx.Table("account").Where("id = ?", currentID(c)).Update("nickname", *body.Username).Error; err != nil {
 				return err
 			}

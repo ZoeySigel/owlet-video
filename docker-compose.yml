@@ -1,10 +1,10 @@
-name: owlet-video
+name: owlet-gcfeed
 services:
   mysql:
     image: mysql:8.4
     environment:
-      MYSQL_DATABASE: owlet_video
-      MYSQL_USER: owlet_video
+      MYSQL_DATABASE: owlet_gcfeed
+      MYSQL_USER: owlet_core
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-local-app-password}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-root-password}
     command: ["--innodb-buffer-pool-size=128M", "--max-connections=40"]
@@ -44,7 +44,7 @@ services:
     command: ["api"]
     environment: &app-env
       ADDR: 0.0.0.0:8080
-      MYSQL_DSN: owlet_video:${MYSQL_PASSWORD:-local-app-password}@tcp(mysql:3306)/owlet_video?charset=utf8mb4&parseTime=True&loc=UTC
+      MYSQL_DSN: owlet_core:${MYSQL_PASSWORD:-local-app-password}@tcp(mysql:3306)/owlet_gcfeed?charset=utf8mb4&parseTime=True&loc=UTC
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-local-redis-password}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-owlet}:${RABBITMQ_PASSWORD:-local-rabbit-password}@rabbitmq:5672/
@@ -53,18 +53,11 @@ services:
       DATA_DIR: /var/lib/owlet-video
       SECURE_COOKIES: "false"
       PPROF_ENABLED: ${PPROF_ENABLED:-false}
-      HOT_WINDOW: ${HOT_WINDOW:-24h}
-      RANK_REFRESH: ${RANK_REFRESH:-1m}
-      FEED_SNAPSHOT_TTL: ${FEED_SNAPSHOT_TTL:-15m}
-      FEED_RANK_LIMIT: ${FEED_RANK_LIMIT:-2000}
       REDIS_TIMEOUT: ${REDIS_TIMEOUT:-200ms}
       DB_TIMEOUT: ${DB_TIMEOUT:-3s}
-      WRITE_RPS: ${WRITE_RPS:-20}
-      WRITE_BURST: ${WRITE_BURST:-20}
-      WRITE_MAX_PENDING: ${WRITE_MAX_PENDING:-200}
-      WRITE_MAX_AGE: ${WRITE_MAX_AGE:-10s}
-    volumes: ["./data:/var/lib/owlet-video"]
+    volumes: ["./data-core:/var/lib/owlet-video"]
     depends_on:
+      core-init: { condition: service_completed_successfully }
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -72,15 +65,30 @@ services:
     build: ./backend
     command: ["worker"]
     environment: *app-env
-    volumes: ["./data:/var/lib/owlet-video"]
+    volumes: ["./data-core:/var/lib/owlet-video"]
     depends_on:
+      core-init: { condition: service_completed_successfully }
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+  core-init:
+    build: ./backend
+    command: ["init-core"]
+    environment: *app-env
+    volumes: ["./data-core:/var/lib/owlet-video"]
+    depends_on:
+      storage-init: { condition: service_completed_successfully }
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+  storage-init:
+    image: alpine:3.21
+    command: ["sh", "-c", "mkdir -p /data/media /data/tmp && chown -R 100:101 /data"]
+    volumes: ["./data-core:/data"]
   web:
     build: ./frontend
     ports: ["127.0.0.1:3000:80"]
-    volumes: ["./data/media:/var/lib/owlet-video/media:ro"]
+    volumes: ["./data-core/media:/var/lib/owlet-video/media:ro"]
     depends_on: [api]
 volumes:
   mysql_data:

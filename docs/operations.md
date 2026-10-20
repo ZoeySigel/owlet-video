@@ -1,3 +1,7 @@
+> 当前仅支持 GCFeed。新建空库需在首次启动前以应用配置运行 `owlet-video init-core`；已有 GCFeed 库保留 verified 标记和现有配置。旧数据使用 [迁移工具](gcfeed-migration.md)。不再支持 BACKEND_ENGINE 切换或旧版 seed 命令。旧数据库的回滚必须使用归档的旧二进制和对应备份。
+>
+> 下文关于 feed_snapshots、HOT_WINDOW、RANK_REFRESH、FEED_SNAPSHOT_TTL、FEED_RANK_LIMIT 和旧互动写入预算的说明为历史记录，已从当前版本删除。当前架构见 [架构文档](architecture.md)。
+
 # 部署与恢复
 
 ## 首次准备

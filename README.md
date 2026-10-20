@@ -8,8 +8,7 @@ Owlet Video 是一个前后端分离的视频分享应用，支持视频上传�
 
 [在线访问](https://owl-et.me) · [架构文档](docs/architecture.md) · [部署与恢复](docs/operations.md)
 
-已加入 GCFeed 核心后端模式：推荐、曝光去重、内容向量、关注分发、异步点赞/收藏、消息中心和播放 QoS。保留邀请码、刷新会话、分片续传、话题及私信。生产站点已于 2026-09-29 完成保留数据的迁移与上线，见[上线验收记录](docs/operations/2026-09-29-gcfeed/report.md)。其他环境需先迁移到独立数据库与媒体目录，再设置 `BACKEND_ENGINE=gcfeed`；未配置时默认仍运行旧后端，下面原有架构说明适用于旧模式。具体差异、启动和回滚步骤见 [GCFeed 迁移说明](docs/gcfeed-migration.md)。
-
+GCFeed 是唯一后端，提供推荐、曝光去重、内容向量、关注分发、异步点赞/收藏、消息中心和播放 QoS，并保留邀请码、刷新会话、分片续传、话题及私信。已删除旧后端运行分支，不再需要 `BACKEND_ENGINE`。已有旧数据请按 [迁移说明](docs/gcfeed-migration.md) 导入独立目标库；现有 GCFeed 数据可以直接继续使用。
 ## 功能
 
 | 模块 | 功能说明 |
@@ -40,32 +39,16 @@ Owlet Video 是一个前后端分离的视频分享应用，支持视频上传�
 
 ## 架构概览
 
-应用由静态前端、API 和 Worker 三部分组成。API 与 Worker 使用同一份 Go 代码，通过启动参数选择运行模式。
+GCFeed 核心代码位于 `backend/internal/`，按 domain、application、infra、interfaces 分层；`backend/` 根目录负责运行装配及 Owlet 的会话、上传、话题、私信和前端 API 适配。
 
-- **请求链路**：浏览器通过同源反向代理访问 `/api/v1`，视频等媒体文件由 Web 服务器直接提供。
-- **业务数据**：MySQL 保存业务数据与不可变榜单快照。最新与关注使用 Redis 热时间线、MySQL 冷数据拼接及 ID 游标；热门和最多点赞使用签名快照游标，优先读取 Redis 有序集合，缓存故障时读取持久化快照。
-- **异步事件**：互动命令与 Outbox 同事务提交，Worker 消费后写入业务数据和通知事件；MQ 故障支持幂等直写。默认保持同步响应结构，也支持 `Prefer: respond-async` 返回 202。
-- **通知更新**：通知先持久化，再通过 Redis Pub/Sub 和 SSE 提醒前端刷新。连接中断后仍可读取历史通知。
-- **文件存储**：视频分片写入临时目录，校验并完成发布后移入媒体目录。备份与恢复需要同时覆盖数据库和媒体文件。
+- MySQL 核心表保存账号、视频、互动、关注、消息、观看事件与内容向量；兼容视图支持现有前端读接口。
+- Redis 缓存 Feed、详情与会话，维护异步互动状态；RabbitMQ Worker 处理互动、关注分发及视频向量生成。
+- 发布视频与扩展 Outbox 同事务提交，Worker 可靠转发 GCFeed 发布事件。
+- 推荐使用确定性文本向量、观看兴趣、热度和新鲜度，并排除近期曝光和打散作者。
+- 最新、热门、关注、推荐使用 GCFeed 分页；最多点赞通过核心统计视图按点赞数与 ID 游标翻页，计数变化会影响后续页面。
+- 视频和上传分片保存在本地目录；数据库和媒体需要一起备份。
 
-表结构、缓存策略及消息一致性设计见 [架构文档](docs/architecture.md)。参考项目的 21 项后端亮点、接口用法和实现边界见 [后端亮点对照](docs/backend-highlights.md)。
-
-## 后端设计
-
-| 能力 | 实现与边界 |
-| --- | --- |
-| 稳定排序分页 | 热门与点赞榜固定快照，按分数、视频 ID 排序；互动计数变化不会移动已发出游标中的视频位置。默认快照保留 15 分钟、最多 2000 条，过期后提示重新加载 |
-| 滑动窗口热榜 | 最近 24 小时有效点赞 × 3 + 评论 × 5；SQL 内聚合并截取前 K 条，Redis 缓存与持久化快照保证稳定翻页 |
-| 事件驱动异步处理 | 持久化互动命令、事务性 Outbox、发布确认、幂等直写、延迟重试和死信；Worker 断线后退避重连 |
-| 热点缓存保护 | 详情请求合并、带令牌的 Redis 重建锁、原子回填、空值缓存、TTL 抖动与回源并发上限 |
-| 降级与恢复 | Redis 超时与熔断、数据库回退、短期旧详情兜底、本地限流、榜单缓存自动重建、SSE 定期刷新通知 |
-| 工程交付 | 独立测试容器、真实依赖故障注入、Go 竞争检测、前端类型检查与静态构建、手动发布及健康检查回滚 |
-
-这些机制提供应用层的故障降级与恢复，当前单机部署不具备数据库、消息队列或主机级故障转移。测试方法与限制见 [后端验收](docs/backend-validation.md)。
-
-本地容量实测、失败档位与复现方法见 [容量压测](docs/capacity/README.md)。初次压测发现热榜重建和 Outbox 投递瓶颈，已针对查询结果规模与批量投递优化；实际容量以对应版本的复测报告为准。
-
-现已补充互动写入预算、积压保护和鉴权故障超时，并完成 20 RPS 的 30 分钟长测及依赖故障验证，修复后另做五分钟复测。版本边界、失败记录和完整数据见 [工程验收报告](docs/capacity/2026-09-26-steady/report.md)。默认写入预算为每 API 进程 20 RPS，不代表生产或多副本容量。
+详见 [架构文档](docs/architecture.md)、[后端验证](docs/backend-validation.md) 和 [上游来源](backend/UPSTREAM.md)。历史旧后端容量报告仅作为归档。
 
 ## 快速启动
 
@@ -107,7 +90,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-首次启动会拉取依赖镜像、构建应用并初始化数据库表。服务就绪后访问 [http://localhost:3000](http://localhost:3000)。
+首次启动会拉取依赖镜像、构建应用并初始化 GCFeed 数据库与兼容视图。服务就绪后访问 [http://localhost:3000](http://localhost:3000)。
 
 也可运行 `bash ./start.sh` 或 Windows 下的 `./start.ps1`。脚本支持前端/Worker 开关；诊断与开关说明见 [后端亮点对照](docs/backend-highlights.md)。
 
@@ -119,15 +102,9 @@ docker compose exec api /usr/local/bin/owlet-video invite
 
 命令会输出一个有效期为 14 天的一次性邀请码。在网站登录页选择“创建账号”，填写邀请码完成注册。可重复运行命令为其他用户生成邀请码。
 
-### 生成本地测试数据
+### 数据初始化
 
-启动 Docker Compose 后，可一次生成 6 个随机账号、24 条可播放的短视频，以及用于测试排序和互动的点赞、评论、关注数据：
-
-```bash
-docker compose run --rm -e SEED_TEST_DATA=1 api seed
-```
-
-命令会在终端输出本次创建的账号和密码，请立即保存。重复执行会新增一批数据，不会覆盖现有账号或视频。可用 `-users` 和 `-videos` 调整数量，例如 `docker compose run --rm -e SEED_TEST_DATA=1 api seed -users 4 -videos 12`。该命令只在显式设置 `SEED_TEST_DATA=1` 时执行；请仅用于本地或专用测试环境。
+Compose 的 `core-init` 服务会初始化空库，并在成功后启动 API 与 Worker。已验证的 GCFeed 数据库保持不变；遇到旧库或未完成迁移的库会拒绝启动，应使用迁移工具。旧版 `seed` 命令已移除。
 
 ### 常用操作
 
@@ -145,7 +122,7 @@ docker compose up -d --build web
 docker compose down
 ```
 
-MySQL、Redis 和 RabbitMQ 数据保存在 Docker 命名卷中；视频与上传临时文件保存在项目的 `data/` 目录。RabbitMQ 管理界面为 [http://localhost:15672](http://localhost:15672)，使用 `.env` 中配置的账号登录。
+MySQL、Redis 和 RabbitMQ 数据保存在 Docker 命名卷中；视频与上传临时文件保存在项目的 `data-core/` 目录。RabbitMQ 管理界面为 [http://localhost:15672](http://localhost:15672)，使用 `.env` 中配置的账号登录。
 
 ## 项目结构
 
@@ -199,11 +176,11 @@ GitHub Actions 在 `main` 推送和 Pull Request 时运行检查，并启动 MyS
 | 内容 | `GET /videos`、`GET /videos/:id`、`GET /tags/:tag/videos`、`POST /videos` |
 | 上传 | `POST /uploads`、`GET /uploads/:id`、`PUT /uploads/:id/chunks/:index`、`POST /uploads/:id/complete`、`POST /covers` |
 | 互动 | `GET/PUT/DELETE /videos/:id/like`、`GET/POST /videos/:id/comments`、`DELETE /comments/:id`、`PUT/DELETE /users/:id/follow`、`GET /me/likes` |
-| 异步操作 | `GET /interactions/:id`（查询当前用户的异步互动命令结果） |
+| GCFeed | `GET /capabilities`、`GET /feed-items`、`POST /feed-queries`、`PUT/DELETE /videos/:id/favorite`、`GET /me/favorites`、`GET /message-center`、`POST /video-view-events`、`POST /playback-qos-reports` |
 | 私信 | `GET /messages`、`GET/POST /messages/:peer` |
 | 通知 | `GET /notifications`、`GET /notifications/unread`、`PATCH /notifications/read`、`GET /notifications/stream` |
 
-接口注册及鉴权范围以 [backend/main.go](backend/main.go) 为准。
+接口注册及鉴权范围以 [backend/main.go](backend/main.go) 和 [backend/core.go](backend/core.go) 为准。
 
 ## 部署
 
@@ -215,9 +192,9 @@ GitHub Actions 在 `main` 推送和 Pull Request 时运行检查，并启动 MyS
 
 ## 当前范围
 
-- 单个视频上限为 200 MiB，分片大小为 5 MiB；媒体存储在服务器本地文件系统。
+- 单个视频默认上限为 8 GiB，分片大小为 5 MiB；媒体存储在服务器本地文件系统。
 - 播放使用上传的原始 MP4 文件，未提供自动转码、多码率或自适应流媒体；能否播放取决于浏览器对文件编码的支持。
-- 内容发现采用时间、热度、点赞数与关注关系排序，未接入个性化推荐算法。
+- 内容发现支持最新、热门、点赞、关注和基于观看兴趣与内容向量的推荐。
 - 前端采用静态导出与查询参数路由，视频分享地址为 `/?view=watch&id=<视频 ID>`。
 
 ## 参考

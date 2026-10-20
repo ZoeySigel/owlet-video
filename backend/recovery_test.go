@@ -3,15 +3,12 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -102,7 +99,7 @@ func integrationApp(t *testing.T) *App {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = db.AutoMigrate(&InteractionCommand{}, &User{}, &Video{}, &Like{}, &Comment{}, &Follow{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}, &Session{}); err != nil {
+	if err = initializeCoreDatabase(db); err != nil {
 		t.Fatal(err)
 	}
 	sqlDB, _ := db.DB()
@@ -113,8 +110,11 @@ func integrationApp(t *testing.T) *App {
 	if err = r.Ping(context.Background()).Err(); err != nil {
 		t.Fatal(err)
 	}
-	app := &App{cfg: Config{JWTSecret: "test-only-signing-secret-with-32-characters", RabbitURL: os.Getenv("TEST_RABBITMQ_URL"), RankLimit: 173}.defaults(), db: db, redis: r}
-	t.Cleanup(func() { app.state().publisher.close() })
+	app := &App{cfg: Config{JWTSecret: "test-only-signing-secret-with-32-characters", RabbitURL: os.Getenv("TEST_RABBITMQ_URL")}.defaults(), db: db, redis: r}
+	if err := app.initCore(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { app.core.mq.Close() })
 	return app
 }
 func testRedis(addr string) *redis.Client {
@@ -123,26 +123,32 @@ func testRedis(addr string) *redis.Client {
 func fixtureVideos(t *testing.T, a *App, n int) []Video {
 	t.Helper()
 	u := User{Username: "test" + uuid.NewString()[:12], PasswordHash: "not-a-login"}
-	if err := a.db.Create(&u).Error; err != nil {
+	if err := a.createCoreUser(a.db, &u); err != nil {
 		t.Fatal(err)
 	}
 	videos := make([]Video, n)
 	for i := range videos {
 		videos[i] = Video{UserID: u.ID, Title: fmt.Sprintf("fixture-%d", i), FilePath: "test.mp4", PublishedAt: time.Now().Add(-time.Hour), LikesCount: 1000000}
 	}
-	if err := a.db.Create(&videos).Error; err != nil {
-		t.Fatal(err)
+	for i := range videos {
+		if err := a.createCoreVideo(a.db, &videos[i]); err != nil {
+			t.Fatal(err)
+		}
+		if err := a.db.Table("video_stat").Where("video_id = ?", videos[i].ID).Update("like_count", videos[i].LikesCount).Error; err != nil {
+			t.Fatal(err)
+		}
 	}
 	ids := make([]uint, n)
 	for i, v := range videos {
 		ids[i] = v.ID
 	}
 	t.Cleanup(func() {
-		a.db.Where("video_id IN ?", ids).Delete(&Like{})
-		a.db.Where("video_id IN ?", ids).Delete(&Comment{})
-		a.db.Where("user_id = ?", u.ID).Delete(&Notification{})
-		a.db.Where("id IN ?", ids).Delete(&Video{})
-		a.db.Delete(&u)
+		for _, table := range []string{"interaction_action", "interaction_comment", "video_stat", "video_embedding"} {
+			a.db.Exec("DELETE FROM "+table+" WHERE video_id IN ?", ids)
+		}
+		a.db.Exec("DELETE FROM user_message WHERE user_id = ?", u.ID)
+		a.db.Exec("DELETE FROM video WHERE id IN ?", ids)
+		a.db.Exec("DELETE FROM account WHERE id = ?", u.ID)
 		for _, id := range ids {
 			a.invalidateVideo(id)
 		}
@@ -159,133 +165,6 @@ func eventually(t *testing.T, timeout time.Duration, check func() bool) {
 		time.Sleep(30 * time.Millisecond)
 	}
 	t.Fatal("condition did not recover before timeout")
-}
-
-func TestRollingWindowAndRemoval(t *testing.T) {
-	a := integrationApp(t)
-	v := fixtureVideos(t, a, 3)
-	now := time.Now().UTC().Truncate(time.Second)
-	likes := []Like{{UserID: v[0].UserID, VideoID: v[0].ID, CreatedAt: now.Add(-23 * time.Hour)}, {UserID: v[1].UserID, VideoID: v[1].ID, CreatedAt: now.Add(-25 * time.Hour)}}
-	comment := Comment{UserID: v[0].UserID, VideoID: v[0].ID, Body: "test", CreatedAt: now.Add(-time.Hour)}
-	if err := a.db.Create(&likes).Error; err != nil {
-		t.Fatal(err)
-	}
-	if err := a.db.Create(&comment).Error; err != nil {
-		t.Fatal(err)
-	}
-	scores := func(at time.Time) map[uint]int64 {
-		rows, err := a.computeRanking(context.Background(), "hot", at)
-		if err != nil {
-			t.Fatal(err)
-		}
-		m := map[uint]int64{}
-		for _, r := range rows {
-			m[r.ID] = r.Score
-		}
-		return m
-	}
-	if s := scores(now); s[v[0].ID] != 8 || s[v[1].ID] != 0 {
-		t.Fatal(s)
-	}
-	if s := scores(now.Add(2 * time.Hour)); s[v[0].ID] != 5 {
-		t.Fatalf("expired like still counted: %v", s)
-	}
-	if err := a.db.Delete(&comment).Error; err != nil {
-		t.Fatal(err)
-	}
-	if s := scores(now); s[v[0].ID] != 3 {
-		t.Fatal("deleted comment still counted", s)
-	}
-	if s := scores(now.Add(25 * time.Hour)); s[v[0].ID] != 0 {
-		t.Fatal("window did not empty without new events", s)
-	}
-}
-
-func TestSnapshotPagingSurvivesChangesAndRedisLoss(t *testing.T) {
-	a := integrationApp(t)
-	v := fixtureVideos(t, a, 55)
-	proxy := newFaultProxy(t, a.redis.Options().Addr)
-	r := testRedis(proxy.listener.Addr().String())
-	defer r.Close()
-	a.redis = r
-	router := a.router()
-	type page struct {
-		Items      []Video
-		NextCursor string
-	}
-	get := func(cursor string) (page, int) {
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/videos?sort=likes&cursor="+url.QueryEscape(cursor), nil))
-		var p page
-		if w.Code == 200 {
-			if err := json.Unmarshal(w.Body.Bytes(), &p); err != nil {
-				t.Fatal(err)
-			}
-		}
-		return p, w.Code
-	}
-	p, status := get("")
-	if status != 200 || len(p.Items) != 20 {
-		t.Fatal(status, p)
-	}
-	snapshot, err := a.parseRankCursor(p.NextCursor, "likes")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { a.db.Where("id = ?", snapshot.Snapshot).Delete(&FeedSnapshot{}) })
-	expected := make([]uint, 55)
-	for i := range v {
-		expected[i] = v[len(v)-1-i].ID
-	}
-	actual := []uint{}
-	for _, row := range p.Items {
-		actual = append(actual, row.ID)
-	}
-	if err := a.db.Model(&Video{}).Where("id = ?", v[0].ID).Update("likes_count", 2000000).Error; err != nil {
-		t.Fatal(err)
-	}
-	proxy.set(false)
-	for p.NextCursor != "" {
-		p, status = get(p.NextCursor)
-		if status != 200 {
-			t.Fatal("fallback failed", status)
-		}
-		for _, row := range p.Items {
-			if row.UserID == v[0].UserID {
-				actual = append(actual, row.ID)
-			}
-		}
-	}
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("unstable page order: %v want %v", actual, expected)
-	}
-	// Remove only this test's cached snapshot; durable fallback must rebuild it.
-	proxy.set(true)
-	metadata, key := snapshotKeys(snapshot.Snapshot)
-	direct := testRedis(env("TEST_REDIS_ADDR", "127.0.0.1:6379"))
-	defer direct.Close()
-	direct.Del(context.Background(), metadata, key)
-	eventually(t, 5*time.Second, func() bool {
-		return a.withRedis(context.Background(), func(ctx context.Context) error { return r.Ping(ctx).Err() }) == nil
-	})
-	p, status = get(a.signRankCursor(snapshot))
-	if status != 200 || len(p.Items) != 20 {
-		t.Fatal(status)
-	}
-	if n := direct.ZCard(context.Background(), key).Val(); n < 55 {
-		t.Fatal("rank index did not reconstruct", n)
-	}
-	broken, _ := json.Marshal(FeedSnapshot{ID: uuid.NewString(), Sort: "likes", Entries: []byte("[]"), ExpiresAt: time.Now().Add(time.Minute)})
-	if err := direct.Set(context.Background(), metadata, broken, time.Minute).Err(); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := a.snapshot(context.Background(), snapshot.Snapshot, "likes"); err != nil || got.ID != snapshot.Snapshot {
-		t.Fatal("corrupt cache metadata prevented durable fallback", got.ID, err)
-	}
-	snapshot.Expires = time.Now().Add(-time.Second).Unix()
-	if _, status = get(a.signRankCursor(snapshot)); status != 410 {
-		t.Fatal("expiry status", status)
-	}
 }
 
 func TestCacheStampedeNegativeLeaseAndStaleFallback(t *testing.T) {
@@ -379,110 +258,6 @@ func TestCacheStampedeNegativeLeaseAndStaleFallback(t *testing.T) {
 	if w.Code != 503 {
 		t.Fatal("database failure must fail readiness", w.Code)
 	}
-}
-
-func TestRedisOutagePreservesNotificationsAndRateLimits(t *testing.T) {
-	a := integrationApp(t)
-	v := fixtureVideos(t, a, 1)[0]
-	proxy := newFaultProxy(t, a.redis.Options().Addr)
-	r := testRedis(proxy.listener.Addr().String())
-	defer r.Close()
-	a.redis = r
-	router := gin.New()
-	router.GET("/limited", a.rateLimit("test-"+uuid.NewString(), 2, time.Minute), func(c *gin.Context) { c.Status(204) })
-	router.GET("/healthz", a.health)
-	request := func(path string) int {
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
-		return w.Code
-	}
-	if s := request("/limited"); s != 204 {
-		t.Fatal(s)
-	}
-	proxy.set(false)
-	if s := request("/limited"); s != 204 {
-		t.Fatal("fallback denied available budget", s)
-	}
-	if s := request("/limited"); s != 429 {
-		t.Fatal("outage reset rate limit", s)
-	}
-	if s := request("/healthz"); s != 200 {
-		t.Fatal("Redis outage made API unavailable", s)
-	}
-	e := event{ID: uuid.NewString(), Kind: "video.liked", Data: map[string]any{"userId": float64(v.UserID + 100000), "ownerId": float64(v.UserID), "videoId": float64(v.ID)}}
-	defer a.db.Where("id = ?", e.ID).Delete(&ProcessedEvent{})
-	for i := 0; i < 2; i++ {
-		if err := a.processEvent(context.Background(), e); err != nil {
-			t.Fatal("optional Redis failed durable event", err)
-		}
-	}
-	var n int64
-	a.db.Model(&Notification{}).Where("user_id = ?", v.UserID).Count(&n)
-	if n != 1 {
-		t.Fatal("notification lost or duplicated", n)
-	}
-	proxy.set(true)
-	eventually(t, 5*time.Second, func() bool {
-		return a.withRedis(context.Background(), func(ctx context.Context) error { return r.Ping(ctx).Err() }) == nil
-	})
-}
-
-func TestWorkerReconnectDrainsOutbox(t *testing.T) {
-	a := integrationApp(t)
-	if a.cfg.RabbitURL == "" {
-		t.Skip("TEST_RABBITMQ_URL not set")
-	}
-	endpoint, err := url.Parse(a.cfg.RabbitURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	proxy := newFaultProxy(t, endpoint.Host)
-	endpoint.Host = proxy.listener.Addr().String()
-	a.cfg.RabbitURL = endpoint.String()
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- a.runWorker(ctx) }()
-	defer func() {
-		cancel()
-		select {
-		case err := <-done:
-			if err != nil {
-				t.Error(err)
-			}
-		case <-time.After(8 * time.Second):
-			t.Error("worker did not stop")
-		}
-	}()
-	marker := func() string {
-		id := uuid.NewString()
-		payload, _ := json.Marshal(event{ID: id, Kind: "test.recovery"})
-		if err := a.db.Create(&Outbox{ID: id, Kind: "test.recovery", Payload: payload}).Error; err != nil {
-			t.Fatal(err)
-		}
-		t.Cleanup(func() { a.db.Where("id = ?", id).Delete(&Outbox{}); a.db.Where("id = ?", id).Delete(&ProcessedEvent{}) })
-		return id
-	}
-	processed := func(id string) bool {
-		var n int64
-		a.db.Model(&ProcessedEvent{}).Where("id = ?", id).Count(&n)
-		return n == 1
-	}
-	first := marker()
-	eventually(t, 8*time.Second, func() bool { return processed(first) })
-	proxy.set(false)
-	second := marker()
-	time.Sleep(300 * time.Millisecond)
-	if processed(second) {
-		t.Fatal("event bypassed unavailable broker")
-	}
-	proxy.set(true)
-	eventually(t, 12*time.Second, func() bool { return processed(second) })
-	eventually(t, time.Second, func() bool {
-		var n int64
-		a.db.Model(&Outbox{}).Where("id = ? AND published_at IS NOT NULL", second).Count(&n)
-		return n == 1
-	})
-	t.Log("worker reconnected and consumed the event persisted during broker outage")
 }
 
 func TestNotificationStreamRefreshesWithoutRedis(t *testing.T) {

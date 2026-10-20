@@ -107,13 +107,3 @@ type ProcessedEvent struct {
 	ID        string `gorm:"primaryKey;size:36"`
 	CreatedAt time.Time
 }
-
-// Ranking snapshots keep pagination stable even when live counters change.
-// MySQL is authoritative so Redis loss does not invalidate an issued cursor.
-type FeedSnapshot struct {
-	ID        string `gorm:"primaryKey;size:36"`
-	Sort      string `gorm:"size:16;not null"`
-	Entries   []byte `gorm:"type:mediumblob;not null"`
-	CreatedAt time.Time
-	ExpiresAt time.Time `gorm:"index;not null"`
-}

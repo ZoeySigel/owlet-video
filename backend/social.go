@@ -15,9 +15,9 @@ func paramID(c *gin.Context, key string) (uint, bool) {
 	return uint(id), true
 }
 
-func (a *App) likeVideo(c *gin.Context) { a.interaction(c, "like") }
+func (a *App) likeVideo(c *gin.Context) { a.coreInteraction(c, "like") }
 
-func (a *App) unlikeVideo(c *gin.Context) { a.interaction(c, "unlike") }
+func (a *App) unlikeVideo(c *gin.Context) { a.coreInteraction(c, "unlike") }
 
 func (a *App) isLiked(c *gin.Context) {
 	id, ok := paramID(c, "id")
@@ -59,13 +59,13 @@ func (a *App) comments(c *gin.Context) {
 	c.JSON(200, list)
 }
 
-func (a *App) createComment(c *gin.Context) { a.interaction(c, "comment") }
+func (a *App) createComment(c *gin.Context) { a.coreInteraction(c, "comment") }
 
-func (a *App) deleteComment(c *gin.Context) { a.interaction(c, "delete_comment") }
+func (a *App) deleteComment(c *gin.Context) { a.coreInteraction(c, "delete_comment") }
 
-func (a *App) follow(c *gin.Context) { a.interaction(c, "follow") }
+func (a *App) follow(c *gin.Context) { a.coreInteraction(c, "follow") }
 
-func (a *App) unfollow(c *gin.Context) { a.interaction(c, "unfollow") }
+func (a *App) unfollow(c *gin.Context) { a.coreInteraction(c, "unfollow") }
 
 func (a *App) relationList(c *gin.Context, followers bool) {
 	id, ok := paramID(c, "id")

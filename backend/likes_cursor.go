@@ -12,8 +12,7 @@ type likesPosition struct {
 	ID    uint  `json:"id"`
 }
 
-// Optional live keyset paging; the default signed snapshot mode remains stable
-// even when like counts change between requests. This mode only breaks ties.
+// Likes paging reads GCFeed statistics through the video compatibility view.
 func (a *App) likesKeyset(c *gin.Context) {
 	q := a.db.WithContext(c.Request.Context()).Preload("User").Model(&Video{})
 	if raw := c.Query("cursor"); raw != "" {

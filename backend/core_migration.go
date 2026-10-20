@@ -54,7 +54,7 @@ func prepareCoreSchema(db *gorm.DB) error {
 	if err := migration.AutoMigrate(db); err != nil {
 		return err
 	}
-	return db.AutoMigrate(&CoreMigration{}, &Invite{}, &Session{}, &Upload{}, &VideoTag{}, &Message{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{}, &InteractionCommand{})
+	return db.AutoMigrate(&CoreMigration{}, &Invite{}, &Session{}, &Upload{}, &VideoTag{}, &Message{}, &Outbox{}, &ProcessedEvent{})
 }
 
 func installCoreViews(db *gorm.DB) error {
@@ -72,6 +72,25 @@ func coreReady(db *gorm.DB) error {
 		return errors.New("GCFeed database is not verified; run migrate-core against a separate target database first")
 	}
 	return nil
+}
+
+// Initialize only an empty database; an existing verified GCFeed database is
+// accepted unchanged. Old or partially migrated databases require the importer.
+func initializeCoreDatabase(db *gorm.DB) error {
+	var tables int64
+	if err := db.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()").Scan(&tables).Error; err != nil {
+		return err
+	}
+	if tables != 0 {
+		return coreReady(db)
+	}
+	if err := prepareCoreSchema(db); err != nil {
+		return err
+	}
+	if err := installCoreViews(db); err != nil {
+		return err
+	}
+	return db.Create(&CoreMigration{ID: coreBaseline, Source: "fresh", State: "verified"}).Error
 }
 
 func distinctMigrationDSNs(source, target string) error {
@@ -243,14 +262,6 @@ func validateMigrationMedia(db *gorm.DB, root string) error {
 }
 
 func copyLegacyRows[T any](source, target *gorm.DB) error {
-	// These extension tables were introduced after the original release.
-	var model T
-	switch any(model).(type) {
-	case FeedSnapshot, InteractionCommand:
-		if !source.Migrator().HasTable(&model) {
-			return nil
-		}
-	}
 	var batch []T
 	return source.FindInBatches(&batch, 200, func(_ *gorm.DB, _ int) error { return target.Create(&batch).Error }).Error
 }
@@ -308,7 +319,7 @@ func copyCoreData(s, t *gorm.DB) error {
 	if err := copyCoreUploads(s, t); err != nil {
 		return err
 	}
-	for _, copy := range []func(*gorm.DB, *gorm.DB) error{copyLegacyRows[Invite], copyLegacyRows[Session], copyLegacyRows[VideoTag], copyLegacyRows[Message], copyLegacyRows[Outbox], copyLegacyRows[ProcessedEvent], copyLegacyRows[FeedSnapshot], copyLegacyRows[InteractionCommand]} {
+	for _, copy := range []func(*gorm.DB, *gorm.DB) error{copyLegacyRows[Invite], copyLegacyRows[Session], copyLegacyRows[VideoTag], copyLegacyRows[Message], copyLegacyRows[Outbox], copyLegacyRows[ProcessedEvent]} {
 		if err := copy(s, t); err != nil {
 			return err
 		}
@@ -488,4 +499,19 @@ func copyCoreUploads(source, target *gorm.DB) error {
 		}
 		return target.Create(&rows).Error
 	}).Error
+}
+
+// Source-only schema for importing old interaction commands.
+type InteractionCommand struct {
+	ID           string `gorm:"primaryKey;size:36"`
+	UserID       uint   `gorm:"index;not null"`
+	TargetID     uint
+	Kind         string `gorm:"size:30;not null"`
+	Body         string `gorm:"size:1000"`
+	Result       []byte `gorm:"type:blob"`
+	Status       int
+	EventID      string     `gorm:"size:36"`
+	EventPayload []byte     `gorm:"-" json:"-"`
+	CompletedAt  *time.Time `gorm:"index:idx_command_pending_created,priority:1"`
+	CreatedAt    time.Time  `gorm:"index:idx_command_pending_created,priority:2"`
 }

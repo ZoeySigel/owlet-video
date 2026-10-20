@@ -206,23 +206,18 @@ func (l *memoryLimiter) take(key string, max int64, window time.Duration, now ti
 }
 
 type appRuntime struct {
-	writes                                                          writeAdmission
-	publisher                                                       commandPublisher
-	cfg                                                             Config
-	flights                                                         flightGroup
-	breaker                                                         circuitBreaker
-	videos                                                          videoMemory
-	limiter                                                         memoryLimiter
-	dbSlots                                                         chan struct{}
-	rankMu                                                          sync.Mutex
-	ranks                                                           map[string]FeedSnapshot
-	rankRefreshing                                                  map[string]bool
-	detailLoads, sharedLoads, staleReads, redisFailures, rankBuilds atomic.Uint64
+	cfg                                                 Config
+	flights                                             flightGroup
+	breaker                                             circuitBreaker
+	videos                                              videoMemory
+	limiter                                             memoryLimiter
+	dbSlots                                             chan struct{}
+	detailLoads, sharedLoads, staleReads, redisFailures atomic.Uint64
 }
 
 func (a *App) state() *appRuntime {
 	a.runtimeOnce.Do(func() {
-		a.runtime = &appRuntime{cfg: a.cfg.defaults(), dbSlots: make(chan struct{}, 12), ranks: make(map[string]FeedSnapshot)}
+		a.runtime = &appRuntime{cfg: a.cfg.defaults(), dbSlots: make(chan struct{}, 12)}
 	})
 	return a.runtime
 }
@@ -264,5 +259,5 @@ func (a *App) health(c *gin.Context) {
 	if a.withRedis(c.Request.Context(), func(ctx context.Context) error { return a.redis.Ping(ctx).Err() }) != nil {
 		status, cache = "degraded", "unavailable"
 	}
-	c.JSON(200, gin.H{"status": status, "database": "ok", "redis": cache, "writes": a.state().writes.view()})
+	c.JSON(200, gin.H{"status": status, "database": "ok", "redis": cache})
 }

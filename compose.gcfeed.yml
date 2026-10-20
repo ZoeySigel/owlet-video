@@ -19,7 +19,6 @@ services:
   api:
     extends: { file: docker-compose.yml, service: api }
     environment: &core-env
-      BACKEND_ENGINE: gcfeed
       MYSQL_DSN: owlet_core:${MYSQL_PASSWORD:-local-app-password}@tcp(mysql:3306)/owlet_gcfeed?charset=utf8mb4&parseTime=True&loc=UTC
       JWT_SECRET: ${JWT_SECRET:?Set the existing JWT_SECRET to preserve sessions}
       PUBLIC_URL: http://localhost:3001
@@ -38,6 +37,9 @@ services:
     extends: { file: docker-compose.yml, service: web }
     ports: !override ["127.0.0.1:3001:80"]
     volumes: !override ["./data-core/media:/var/lib/owlet-video/media:ro"]
+  core-init:
+    extends: { file: docker-compose.yml, service: core-init }
+    environment: *core-env
 volumes:
   mysql_data:
   redis_data:

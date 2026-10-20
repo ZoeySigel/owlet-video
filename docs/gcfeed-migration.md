@@ -2,7 +2,7 @@
 
 基线：[LeoninCS/GCFeed](https://github.com/LeoninCS/GCFeed/tree/8cf995cfa03985c335594c453ea050df5c0f1b6a/apps/api)，提交 `8cf995cfa03985c335594c453ea050df5c0f1b6a`。核心源码在 `backend/internal`，上游测试在 `backend/test`，来源声明见 `backend/UPSTREAM.md`。
 
-实现边界按用户选择：保留数据并提供迁移，保留本地功能，核心链路对齐 GCFeed。未配置时默认运行旧模式；生产站点已于 2026-09-29 迁移并设置 `BACKEND_ENGINE=gcfeed`，详见[上线验收记录](operations/2026-09-29-gcfeed/report.md)。启动要求目标库存在 verified 标记，不在旧库原地替换表。
+实现边界按用户选择：保留数据并提供迁移，保留本地功能，核心链路对齐 GCFeed。GCFeed 现为唯一后端，`BACKEND_ENGINE` 已不再参与运行选择；生产站点已于 2026-09-29 迁移，详见[上线验收记录](operations/2026-09-29-gcfeed/report.md)。启动要求目标库存在 verified 标记，不在旧库原地替换表。
 
 ## 实现对照
 
@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | 架构 | domain/application/infra/interfaces | 原 API/Worker 命令装配服务 |
 | 推荐 | 128 维 hash n-gram 内容向量、观看兴趣、相似度/热度/新鲜度评分、曝光排除、作者打散 | 推荐入口与旧 JSON 适配 |
-| Feed | timeline/hot/following/recommend、缓存、关注回填、推拉混合分发 | 保留点赞快照榜和话题流 |
+| Feed | timeline/hot/following/recommend、缓存、关注回填、推拉混合分发 | 保留按核心统计游标分页的点赞榜和话题流 |
 | 互动 | Redis+RabbitMQ action 与数据库 Worker、评论和关注服务 | 旧路由、@提及、新增收藏及收藏列表 |
 | 发布 | video/video_stat，事件驱动向量生成、分发与预热 | 分片/MD5/续传、封面、话题、事务 Outbox |
 | 播放 | 曝光、观看事件、配置、预加载、QoS | 原生播放器按实际播放时长上报，详情场景为 watch |
@@ -53,9 +53,11 @@ inspect 检查待办、媒体存在/大小并输出数量，不写入目标。ap
 
 prepared 状态可重试复制事务，copied 可重试核验/向量回填，verified 拒绝重放。不要手工改标记。文件复制若强制中断留下不完整目标文件，重试会因校验不一致中止；保留故障目录，改用新的空目标目录重做。源应全程停写，不支持在线增量迁移。
 
-## 独立本地启动
+## 本地启动
 
-compose.gcfeed.yml 单独使用，不与旧文件通过 -f 合并。它继承基础服务配置，但采用独立项目卷、数据库 owlet_gcfeed、data-core 目录、页面端口 3001；需要支持 !override 的 Docker Compose。设置与旧环境相同的 JWT_SECRET，以保留会话。默认密码仅用于本地。
+全新空库可以直接 `docker compose up -d --build`，由 `core-init` 初始化。旧数据迁移时先仅启动依赖并完成迁移，再启动 API/Worker；不要对待迁移目标预先运行 `core-init`。
+
+默认 `docker-compose.yml` 已使用 GCFeed、数据库 owlet_gcfeed 和 data-core 目录，页面端口 3000。`compose.gcfeed.yml` 单独使用，兼容原 GCFeed 本地环境的端口 3001 与 MySQL 33306；需要支持 !override 的 Docker Compose。设置与旧环境相同的 JWT_SECRET，以保留会话。默认密码仅用于本地。
 
 ```sh
 docker compose -f compose.gcfeed.yml up -d --wait mysql redis rabbitmq

@@ -54,12 +54,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreMode := os.Getenv("BACKEND_ENGINE") == "gcfeed"
-	if coreMode {
-		err = coreReady(db)
-	} else {
-		err = db.AutoMigrate(&InteractionCommand{}, &User{}, &Invite{}, &Session{}, &Video{}, &Upload{}, &Like{}, &Comment{}, &Follow{}, &VideoTag{}, &Message{}, &Notification{}, &Outbox{}, &ProcessedEvent{}, &FeedSnapshot{})
+	if len(os.Args) > 1 && os.Args[1] == "init-core" {
+		if err := initializeCoreDatabase(db); err != nil {
+			log.Fatal(err)
+		}
+		sqlDB, _ := db.DB()
+		_ = sqlDB.Close()
+		return
 	}
+	err = coreReady(db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,29 +78,24 @@ func main() {
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr, Password: cfg.RedisPassword, DB: cfg.RedisDB, PoolSize: 8, DialTimeout: cfg.RedisTimeout, ReadTimeout: cfg.RedisTimeout, WriteTimeout: cfg.RedisTimeout, PoolTimeout: cfg.RedisTimeout, MaxRetries: -1, ContextTimeoutEnabled: true})
 	app := &App{cfg: cfg, db: db, redis: rdb}
-	if coreMode {
-		if err := app.initCore(); err != nil {
-			log.Fatal(err)
-		}
-		defer app.core.mq.Close()
+	if err := app.initCore(); err != nil {
+		log.Fatal(err)
 	}
+	defer app.core.mq.Close()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	var coreDisconnected atomic.Bool
-	if coreMode {
-		go func() {
-			select {
-			case <-ctx.Done():
-			case <-app.core.mq.Done():
-				log.Print("core broker disconnected; shutting down for supervisor restart")
-				coreDisconnected.Store(true)
-				stop()
-			}
-		}()
-	}
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-app.core.mq.Done():
+			log.Print("core broker disconnected; shutting down for supervisor restart")
+			coreDisconnected.Store(true)
+			stop()
+		}
+	}()
 	defer sqlDB.Close()
 	defer rdb.Close()
-	defer app.state().publisher.close()
 	mode := "api"
 	if len(os.Args) > 1 {
 		mode = os.Args[1]
@@ -109,7 +107,6 @@ func main() {
 	}
 	switch mode {
 	case "api":
-		go app.monitorWrites(ctx)
 		server := &http.Server{Addr: cfg.Addr, Handler: app.router(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
 		go func() {
 			<-ctx.Done()
@@ -122,11 +119,7 @@ func main() {
 			log.Fatal(err)
 		}
 	case "worker":
-		work := app.runWorker
-		if app.core != nil {
-			work = app.coreWorker
-		}
-		if err := work(ctx); err != nil && ctx.Err() == nil {
+		if err := app.coreWorker(ctx); err != nil && ctx.Err() == nil {
 			log.Fatal(err)
 		}
 	case "invite":
@@ -140,18 +133,8 @@ func main() {
 		if err := app.cleanupUploads(); err != nil {
 			log.Fatal(err)
 		}
-	case "seed":
-		if coreMode {
-			log.Fatal("seed legacy fixtures before migration; core database seeding is not supported")
-		}
-		if os.Getenv("SEED_TEST_DATA") != "1" {
-			log.Fatal("seed requires SEED_TEST_DATA=1")
-		}
-		if err := app.seedTestData(os.Args[2:]); err != nil {
-			log.Fatal(err)
-		}
 	default:
-		log.Fatal("mode must be api, worker, invite, cleanup, or seed")
+		log.Fatal("mode must be api, worker, invite, or cleanup")
 	}
 	if coreDisconnected.Load() {
 		log.Fatal("core broker connection lost")
@@ -167,13 +150,7 @@ func currentID(c *gin.Context) uint { return c.MustGet("userID").(uint) }
 func (a *App) router() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger(), a.sameOrigin())
-	if a.core != nil {
-		a.coreRoutes(r)
-	} else {
-		r.GET("/api/v1/capabilities", func(c *gin.Context) {
-			c.JSON(200, gin.H{"engine": "legacy", "recommendation": false, "favorites": false})
-		})
-	}
+	a.coreRoutes(r)
 	_ = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
 	r.GET("/livez", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 	r.GET("/healthz", a.health)
@@ -193,7 +170,6 @@ func (a *App) router() *gin.Engine {
 	v.GET("/users/:id/following", a.following)
 	auth := v.Group("")
 	auth.Use(a.auth())
-	auth.GET("/interactions/:id", a.interactionStatus)
 	auth.PATCH("/me", a.updateMe)
 	auth.PATCH("/auth/password", a.changePassword)
 	auth.POST("/me/avatar", a.uploadAvatar)

@@ -360,13 +360,7 @@ func (a *App) publishVideo(c *gin.Context) {
 	}
 	v := Video{UserID: currentID(c), Title: strings.TrimSpace(body.Title), Description: body.Description, FilePath: rel, CoverPath: coverPath, Size: u.Size, PublishedAt: time.Now()}
 	err := a.db.Transaction(func(tx *gorm.DB) error {
-		var createErr error
-		if a.core != nil {
-			createErr = a.createCoreVideo(tx, &v)
-		} else {
-			createErr = tx.Create(&v).Error
-		}
-		if err := createErr; err != nil {
+		if err := a.createCoreVideo(tx, &v); err != nil {
 			return err
 		}
 		seen := map[string]bool{}
@@ -391,7 +385,6 @@ func (a *App) publishVideo(c *gin.Context) {
 	}
 	u.Published = true
 	a.cacheUpload(u)
-	a.invalidateTimeline(0)
 	a.hydrateVideo(&v)
 	c.JSON(201, v)
 }

@@ -6,7 +6,7 @@ flock -n 9 || exit 0
 set -a
 source /etc/owlet-video/app.env
 set +a
-database=${BACKUP_DATABASE:-owlet_video}
+database=${BACKUP_DATABASE:-owlet_gcfeed}
 data_dir=${DATA_DIR:-/var/lib/owlet-video}
 [[ "$database" =~ ^[a-zA-Z0-9_]+$ ]] || { echo 'invalid backup database' >&2; exit 1; }
 if [[ -x /srv/owlet-video/current/bin/owlet-video ]]; then

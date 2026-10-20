@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"math/rand/v2"
 	"net"
-	"regexp"
 	"sync"
 	"time"
 
@@ -31,8 +29,7 @@ func enqueue(tx *gorm.DB, kind string, data map[string]any) error {
 	}
 	return tx.Create(&Outbox{ID: e.ID, Kind: kind, Payload: b}).Error
 }
-func eventUint(e event, key string) uint     { n, _ := e.Data[key].(float64); return uint(n) }
-func eventString(e event, key string) string { s, _ := e.Data[key].(string); return s }
+func eventUint(e event, key string) uint { n, _ := e.Data[key].(float64); return uint(n) }
 
 func declareBroker(ch *amqp.Channel) error {
 	if err := ch.ExchangeDeclare("owlet.events", "topic", true, false, false, false, nil); err != nil {
@@ -56,14 +53,10 @@ func declareBroker(ch *amqp.Channel) error {
 	return ch.QueueBind("owlet.dead", "events", "owlet.dlx", false, nil)
 }
 
-// Run maintenance independently of RabbitMQ; reconnect failed broker sessions
-// with capped exponential backoff instead of relying only on systemd restarts.
+// Reconnect extension outbox broker sessions with capped exponential backoff.
 func (a *App) runWorker(ctx context.Context) error {
 	work, cancel := context.WithCancel(ctx)
 	defer cancel()
-	maintenanceDone := make(chan struct{})
-	go func() { defer close(maintenanceDone); a.rankMaintenance(work) }()
-	defer func() { cancel(); <-maintenanceDone }()
 	delay := time.Second
 	for work.Err() == nil {
 		started := time.Now()
@@ -298,13 +291,7 @@ func (a *App) consumeEvents(ctx context.Context, conn *amqp.Connection) error {
 	}
 }
 
-var mentionPattern = regexp.MustCompile(`@[a-zA-Z0-9_]{3,40}`)
-
 func (a *App) processEvent(ctx context.Context, e event) error {
-	if e.Kind == "interaction.requested" {
-		return a.executeInteraction(ctx, eventString(e, "commandId"))
-	}
-	var notifyUsers []uint
 	err := a.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&ProcessedEvent{ID: e.ID}).Error
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -313,72 +300,27 @@ func (a *App) processEvent(ctx context.Context, e event) error {
 		if err != nil {
 			return err
 		}
-		actor := eventUint(e, "userId")
-		owner := eventUint(e, "ownerId")
-		video := eventUint(e, "videoId")
-		createNotice := func(target uint, kind, body string) error {
-			if target == 0 || target == actor {
-				return nil
-			}
-			n := Notification{UserID: target, ActorID: actor, Kind: kind, Body: body}
-			if video > 0 {
-				n.VideoID = &video
-			}
-			if err := tx.Create(&n).Error; err != nil {
-				return err
-			}
-			notifyUsers = append(notifyUsers, target)
-			return nil
-		}
-		switch e.Kind {
-		case "video.liked":
-			return createNotice(owner, "like", "赞了你的视频")
-		case "video.commented":
-			if err := createNotice(owner, "comment", "评论了你的视频"); err != nil {
-				return err
-			}
-			seen := map[uint]bool{}
-			for _, m := range mentionPattern.FindAllString(eventString(e, "body"), -1) {
-				var u User
-				if tx.Where("username = ?", m[1:]).First(&u).Error == nil && !seen[u.ID] {
-					seen[u.ID] = true
-					if err := createNotice(u.ID, "mention", "在评论中提到了你"); err != nil {
-						return err
-					}
-				}
-			}
-		case "user.followed":
-			return createNotice(owner, "follow", "关注了你")
-		}
+
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	// Cache and realtime signals are optional side effects. A Redis outage must
-	// not dead-letter an event whose durable notification already committed.
+	// GCFeed consumers handle duplicate published events idempotently. Relay on
+	// every delivery so a previous broker failure can retry after the marker.
 	if e.Kind == "video.published" {
-		if a.core != nil {
-			var v Video
-			if err := a.db.WithContext(ctx).First(&v, eventUint(e, "videoId")).Error; err != nil {
-				return err
-			}
-			if err := a.publishCoreVideo(v); err != nil {
-				return err
-			}
+		var v Video
+		if err := a.db.WithContext(ctx).First(&v, eventUint(e, "videoId")).Error; err != nil {
+			return err
 		}
-		a.invalidateTimeline(0)
-		_, _ = a.timeline(ctx, 0, 0)
+		if err := a.publishCoreVideo(v); err != nil {
+			return err
+		}
 	}
-	_ = a.updateHotBucket(ctx, e)
 	videoID := eventUint(e, "videoId")
 	if videoID > 0 {
 		a.invalidateVideo(videoID)
 	}
-	for _, uid := range notifyUsers {
-		_ = a.withRedis(ctx, func(ctx context.Context) error {
-			return a.redis.Publish(ctx, fmt.Sprintf("notifications:%d", uid), e.ID).Err()
-		})
-	}
+
 	return nil
 }
