@@ -1,9 +1,6 @@
 package applicationfeed
 
 import (
-	applicationrecommendation "github.com/ZoeySigel/owlet-video/backend/internal/application/recommendation"
-	domainfeed "github.com/ZoeySigel/owlet-video/backend/internal/domain/feed"
-	inframetrics "github.com/ZoeySigel/owlet-video/backend/internal/infra/metrics"
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
@@ -11,6 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	applicationrecommendation "github.com/ZoeySigel/owlet-video/backend/internal/application/recommendation"
+	domainfeed "github.com/ZoeySigel/owlet-video/backend/internal/domain/feed"
+	inframetrics "github.com/ZoeySigel/owlet-video/backend/internal/infra/metrics"
 	"hash/fnv"
 	"strings"
 	"time"
@@ -205,6 +205,29 @@ func (s *Service) GetFeed(ctx context.Context, req FeedRequest) (*FeedResult, er
 		return nil, domainfeed.ErrUnsupportedScene
 	}
 	result, err := strategy.List(ctx, req)
+	// A page/card cache is not an authority for publication status. Real storage
+	// rechecks visibility so moderation applies even to warm caches and inboxes.
+	if checker, ok := s.repo.(interface {
+		PublishedVideoIDs(context.Context, []int64) (map[int64]bool, error)
+	}); ok && err == nil && result != nil && len(result.Items) > 0 {
+		ids := make([]int64, 0, len(result.Items))
+		for _, item := range result.Items {
+			ids = append(ids, item.VideoID)
+		}
+		var visible map[int64]bool
+		visible, err = checker.PublishedVideoIDs(ctx, ids)
+		if err != nil {
+			result = nil
+		} else {
+			items := result.Items[:0]
+			for _, item := range result.Items {
+				if visible[item.VideoID] {
+					items = append(items, item)
+				}
+			}
+			result.Items = items
+		}
+	}
 	itemCount := 0
 	if result != nil {
 		itemCount = len(result.Items)

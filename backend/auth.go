@@ -67,6 +67,10 @@ func (a *App) clearCookies(c *gin.Context) {
 }
 
 func (a *App) newSession(c *gin.Context, userID uint) error {
+	return a.newSessionOn(a.db, c, userID)
+}
+
+func (a *App) newSessionOn(db *gorm.DB, c *gin.Context, userID uint) error {
 	sid := uuid.NewString()
 	access, err := a.signToken(userID, sid, "access", accessTTL)
 	if err != nil {
@@ -77,7 +81,7 @@ func (a *App) newSession(c *gin.Context, userID uint) error {
 		return err
 	}
 	s := Session{ID: sid, UserID: userID, RefreshHash: shaHex(refresh), ExpiresAt: time.Now().Add(refreshTTL)}
-	if err := a.db.Create(&s).Error; err != nil {
+	if err := db.Create(&s).Error; err != nil {
 		return err
 	}
 	a.setCookies(c, access, refresh)
@@ -180,8 +184,35 @@ func (a *App) login(c *gin.Context) {
 		errorJSON(c, 401, "invalid_credentials")
 		return
 	}
-	if a.newSession(c, user.ID) != nil {
-		errorJSON(c, 500, "session_error")
+	// Serialize session creation with administrative password resets and bans.
+	// A login that verified an old password cannot escape a concurrent reset.
+	disabled := errors.New("account_disabled")
+	changed := errors.New("credentials_changed")
+	err := a.db.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
+		var account struct {
+			Password string
+			Status   int
+		}
+		if err := tx.Table("account").Clauses(clause.Locking{Strength: "UPDATE"}).Where("id=?", user.ID).Take(&account).Error; err != nil {
+			return err
+		}
+		if account.Status != 1 {
+			return disabled
+		}
+		if account.Password != user.PasswordHash {
+			return changed
+		}
+		return a.newSessionOn(tx, c, user.ID)
+	})
+	if err != nil {
+		a.clearCookies(c)
+		if errors.Is(err, disabled) {
+			errorJSON(c, 403, "account_disabled")
+		} else if errors.Is(err, changed) {
+			errorJSON(c, 401, "invalid_credentials")
+		} else {
+			errorJSON(c, 503, "auth_unavailable")
+		}
 		return
 	}
 	c.JSON(200, user)
@@ -201,6 +232,16 @@ func (a *App) refresh(c *gin.Context) {
 	uid, err := strconv.ParseUint(claims.Subject, 10, 64)
 	if err != nil {
 		errorJSON(c, 401, "invalid_session")
+		return
+	}
+	account, err := a.accountAccess(c.Request.Context(), uint(uid))
+	if err != nil {
+		errorJSON(c, 503, "auth_unavailable")
+		return
+	}
+	if account.Status != 1 {
+		a.clearCookies(c)
+		errorJSON(c, 403, "account_disabled")
 		return
 	}
 	access, err := a.signToken(uint(uid), claims.SessionID, "access", accessTTL)
@@ -264,7 +305,10 @@ func (a *App) me(c *gin.Context) {
 		errorJSON(c, 404, "user_not_found")
 		return
 	}
-	c.JSON(200, u)
+	c.JSON(200, struct {
+		User
+		IsAdmin bool `json:"isAdmin"`
+	}{u, c.GetString("userRole") == "admin"})
 }
 
 func (a *App) updateMe(c *gin.Context) {

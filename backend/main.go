@@ -66,6 +66,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(os.Args) > 1 && os.Args[1] == "grant-admin" {
+		if len(os.Args) != 3 {
+			log.Fatal("usage: owlet-video grant-admin USERNAME")
+		}
+		if err := grantAdmin(db, os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
+		sqlDB, _ := db.DB()
+		_ = sqlDB.Close()
+		fmt.Println("Administrator access granted")
+		return
+	}
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Fatal(err)
@@ -151,6 +163,7 @@ func (a *App) router() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger(), a.sameOrigin())
 	a.coreRoutes(r)
+	a.adminRoutes(r)
 	_ = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
 	r.GET("/livez", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 	r.GET("/healthz", a.health)

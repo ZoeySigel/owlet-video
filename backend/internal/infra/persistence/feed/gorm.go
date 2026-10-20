@@ -1,12 +1,12 @@
 package infrafeed
 
 import (
+	"context"
+	"fmt"
 	domainfeed "github.com/ZoeySigel/owlet-video/backend/internal/domain/feed"
 	domaininteraction "github.com/ZoeySigel/owlet-video/backend/internal/domain/interaction"
 	domainrelation "github.com/ZoeySigel/owlet-video/backend/internal/domain/relation"
 	domainvideo "github.com/ZoeySigel/owlet-video/backend/internal/domain/video"
-	"context"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -25,6 +25,16 @@ type viewerActionStateModel struct {
 // New 创建 Feed 仓储实现。
 func New(db *gorm.DB) *Repository {
 	return &Repository{db: db}
+}
+
+func (r *Repository) PublishedVideoIDs(ctx context.Context, ids []int64) (map[int64]bool, error) {
+	var found []int64
+	err := r.db.WithContext(ctx).Table("video").Where("id IN ? AND status=?", ids, domainvideo.StatusPublished).Pluck("id", &found).Error
+	result := make(map[int64]bool, len(found))
+	for _, id := range found {
+		result[id] = true
+	}
+	return result, err
 }
 
 // EnsureTimelineIndex 创建 timeline 回源查询所需索引。

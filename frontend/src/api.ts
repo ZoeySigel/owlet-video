@@ -1,4 +1,4 @@
-export type User = { id: number; username: string; bio: string; avatarUrl: string; createdAt: string };
+export type User = { id: number; username: string; bio: string; avatarUrl: string; createdAt: string; isAdmin?: boolean };
 export type Video = { id: number; userId: number; author: User; title: string; description: string; playUrl: string; coverUrl: string; likesCount: number; commentsCount: number; favoritesCount?: number; popularity: number; publishedAt: string };
 export type Comment = { id: number; userId: number; author: User; videoId: number; body: string; createdAt: string };
 export type Message = { id: number; senderId: number; recipientId: number; body: string; createdAt: string };

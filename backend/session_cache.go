@@ -128,7 +128,17 @@ func (a *App) authenticate(c *gin.Context, optional bool) {
 		errorJSON(c, 401, "invalid_session")
 		return
 	}
+	account, err := a.accountAccess(c.Request.Context(), uint(uid))
+	if errors.Is(err, gorm.ErrRecordNotFound) || (err == nil && account.Status != 1) {
+		errorJSON(c, 403, "account_disabled")
+		return
+	}
+	if err != nil {
+		errorJSON(c, 503, "auth_unavailable")
+		return
+	}
 	c.Set("userID", uint(uid))
+	c.Set("userRole", account.Role)
 	c.Set("sessionID", s.ID)
 	c.Next()
 }

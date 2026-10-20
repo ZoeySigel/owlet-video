@@ -18,6 +18,7 @@ func (a *App) invalidateAuthor(uid uint) {
 	if a.db.Model(&Video{}).Where("user_id = ?", uid).Pluck("id", &ids).Error == nil {
 		for _, id := range ids {
 			a.invalidateVideo(id)
+			_ = a.withRedis(context.Background(), func(ctx context.Context) error { return a.redis.Del(ctx, fmt.Sprintf("video:card:v1:%d", id)).Err() })
 		}
 	}
 }

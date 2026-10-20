@@ -232,6 +232,14 @@ export function errorMessage(error: unknown) {
   if (error instanceof Error && error.name === "TimeoutError") return "请求超时，请检查网络后重新提交，已上传的分片会保留。";
   const code = error instanceof Error ? error.message : String(error);
   const messages: Record<string, string> = {
+    admin_required: "该账号没有管理员权限。",
+    account_disabled: "账号已停用，请联系管理员。",
+    admin_unavailable: "管理服务暂时不可用，请稍后重试。",
+    protected_admin: "管理员账号不能在后台停用。",
+    record_not_found: "记录不存在或已被删除，请刷新列表。",
+    username_taken: "用户名已被使用，请换一个。",
+    invalid_video: "请检查视频标题和简介的长度。",
+    invalid_page: "页码无效，请重新加载列表。",
     login_required: "请先登录后继续操作。",
     invalid_session: "登录已过期，请重新登录。",
     invalid_credentials: "用户名或密码不正确，请检查后重试。",

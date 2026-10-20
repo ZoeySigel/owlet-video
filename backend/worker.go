@@ -311,6 +311,11 @@ func (a *App) processEvent(ctx context.Context, e event) error {
 	if e.Kind == "video.published" {
 		var v Video
 		if err := a.db.WithContext(ctx).First(&v, eventUint(e, "videoId")).Error; err != nil {
+			// A moderator may take the video offline before this event drains.
+			// Restoring it queues a fresh event; obsolete publication is complete.
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil
+			}
 			return err
 		}
 		if err := a.publishCoreVideo(v); err != nil {

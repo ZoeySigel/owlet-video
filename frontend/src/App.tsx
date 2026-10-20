@@ -28,6 +28,7 @@ import {
 } from "./ui";
 import Publish from "./Publish";
 import CorePlayback from "./CorePlayback";
+import Admin from "./Admin";
 
 type View =
   | "home"
@@ -40,6 +41,7 @@ type View =
   | "settings"
   | "liked"
   | "favorites"
+  | "admin"
   | "tag";
 type Sort = "latest" | "hot" | "likes" | "following" | "recommend";
 type Route = {
@@ -73,6 +75,7 @@ const titles: Record<View, string> = {
   settings: "设置",
   liked: "我的喜欢",
   favorites: "我的收藏",
+  admin: "管理后台",
   tag: "话题",
 };
 function parseRoute(): Route {
@@ -247,6 +250,7 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
+          {user?.isAdmin && <button className="settings-link" onClick={() => navigate("admin")}><Icon name="settings" /><span>管理后台</span></button>}
           {user ? (
             <button
               className="sidebar-account"
@@ -294,6 +298,7 @@ export default function App() {
           owlet®
         </button>
         <div className="header-actions">
+          {user?.isAdmin && <button className="icon-button" title="管理后台" aria-label="管理后台" onClick={() => navigate("admin")}><Icon name="people" /></button>}
           <Button variant="secondary" onClick={() => navigate("publish")}>
             <Icon name="plus" />
             发布<span className="desktop-word">视频</span>
@@ -362,6 +367,7 @@ export default function App() {
             {route.view === "settings" && (
               <Settings refreshUser={refreshUser} {...props} />
             )}
+            {route.view === "admin" && <Admin user={user} onLogin={() => navigate("account")} refreshUser={refreshUser} notify={alert} />}
             {route.view === "liked" && <Collection mode="liked" {...props} />}
             {route.view === "favorites" && <Collection mode="favorites" {...props} />}
             {route.view === "tag" && (

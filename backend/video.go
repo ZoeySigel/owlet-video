@@ -400,6 +400,16 @@ func (a *App) videoDetail(c *gin.Context) {
 	if !ok {
 		return
 	}
+	// Moderation must also hide an already cached detail on every API process.
+	var visible int64
+	if err := a.db.WithContext(c.Request.Context()).Table("video").Where("id=? AND status=2", id).Count(&visible).Error; err != nil {
+		errorJSON(c, 503, "video_temporarily_unavailable")
+		return
+	}
+	if visible == 0 {
+		errorJSON(c, 404, "video_not_found")
+		return
+	}
 	result, err := a.detail(c.Request.Context(), id)
 	if err != nil {
 		c.Header("Retry-After", "1")
