@@ -406,7 +406,6 @@ function LoginRequired({ navigate }: Pick<Common, "navigate">) {
 }
 
 function Home({ sort, navigate, user }: Common & { sort: Sort }) {
-  const capabilities = useResource<{ recommendation: boolean }>("/capabilities");
   const cached = cachedPublic<Feed>(`/videos?sort=${sort}`);
   const [items, setItems] = useState<Video[]>(cached?.items || []);
   const [cursor, setCursor] = useState(cached?.nextCursor || "");
@@ -479,7 +478,7 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
       </PageHeading>
       <div className="feed-toolbar">
         <div className="tabs" aria-label="视频排序">
-          {sorts.filter(([value]) => value !== "recommend" || capabilities.data?.recommendation).map(([value, label]) => (
+          {sorts.map(([value, label]) => (
             <button
               key={value}
               aria-pressed={sort === value}
