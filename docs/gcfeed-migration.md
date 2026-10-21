@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | 架构 | domain/application/infra/interfaces | 原 API/Worker 命令装配服务 |
 | 推荐 | 128 维 hash n-gram 内容向量、观看兴趣、相似度/热度/新鲜度评分、曝光排除、作者打散 | 推荐入口与旧 JSON 适配 |
-| Feed | timeline/hot/following/recommend、缓存、关注回填、推拉混合分发 | 保留按核心统计游标分页的点赞榜和话题流 |
+| Feed | timeline/hot/following/recommend、缓存、关注回填、推拉混合分发 | 保留话题流 |
 | 互动 | Redis+RabbitMQ action 与数据库 Worker、评论和关注服务 | 旧路由、@提及、新增收藏及收藏列表 |
 | 发布 | video/video_stat，事件驱动向量生成、分发与预热 | 分片/MD5/续传、封面、话题、事务 Outbox |
 | 播放 | 曝光、观看事件、配置、预加载、QoS | 原生播放器按实际播放时长上报，详情场景为 watch |

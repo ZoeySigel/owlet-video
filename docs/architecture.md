@@ -12,7 +12,7 @@ GCFeed 是唯一运行后端，启动不再读取 BACKEND_ENGINE。核心源码�
 
 API 和 Worker 共用 Go 二进制。GCFeed 的 domain/application/infra/interfaces 分层处理 Feed、推荐、互动、关系、消息、曝光、播放与向量。根目录保留 Owlet 的 Cookie/Session、刷新令牌、邀请码、分片上传、头像、话题、私信以及 JSON 适配。
 
-最新、热门、关注和推荐由 GCFeed Feed 服务处理。推荐使用 128 维 hash n-gram 内容向量、观看兴趣、相似度、热度及新鲜度，排除近期曝光并打散作者。最多点赞列表读取核心统计视图，以点赞数和 ID 游标分页；实时计数变化可能改变后续页面。
+时间线、热门、关注和推荐由 GCFeed Feed 服务处理。推荐使用 128 维 hash n-gram 内容向量、观看兴趣、相似度、热度及新鲜度，排除近期曝光并打散作者。
 
 点赞和收藏通过 Redis 与 RabbitMQ 异步处理，评论和关注调用核心服务。视频发布与 Outbox 同事务提交，扩展 Worker 确认消息后转发核心发布事件，核心 Worker 处理关注分发、预热与向量生成。扩展 Outbox 不再执行旧互动命令、旧通知生成或旧榜单维护。
 

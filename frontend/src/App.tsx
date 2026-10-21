@@ -43,7 +43,7 @@ type View =
   | "favorites"
   | "admin"
   | "tag";
-type Sort = "latest" | "hot" | "likes" | "following" | "recommend";
+type Sort = "latest" | "hot" | "following" | "recommend";
 type Route = {
   view: View;
   id?: string;
@@ -59,9 +59,8 @@ type Common = {
 };
 const sorts: [Sort, string][] = [
   ["recommend", "为你推荐"],
-  ["latest", "最新"],
+  ["latest", "时间线"],
   ["hot", "热门"],
-  ["likes", "最多点赞"],
   ["following", "关注"],
 ];
 const titles: Record<View, string> = {
@@ -196,7 +195,16 @@ export default function App() {
       view: "liked",
       active: route.view === "liked",
     },
-    ...(capabilities.data?.favorites ? [{ label: "我的收藏", icon: "heart", view: "favorites" as View, active: route.view === "favorites" }] : []),
+    ...(capabilities.data?.favorites
+      ? [
+          {
+            label: "我的收藏",
+            icon: "heart",
+            view: "favorites" as View,
+            active: route.view === "favorites",
+          },
+        ]
+      : []),
     {
       label: "私信",
       icon: "message",
@@ -250,7 +258,12 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          {user?.isAdmin && <button className="settings-link" onClick={() => navigate("admin")}><Icon name="settings" /><span>管理后台</span></button>}
+          {user?.isAdmin && (
+            <button className="settings-link" onClick={() => navigate("admin")}>
+              <Icon name="settings" />
+              <span>管理后台</span>
+            </button>
+          )}
           {user ? (
             <button
               className="sidebar-account"
@@ -298,7 +311,16 @@ export default function App() {
           owlet®
         </button>
         <div className="header-actions">
-          {user?.isAdmin && <button className="icon-button" title="管理后台" aria-label="管理后台" onClick={() => navigate("admin")}><Icon name="people" /></button>}
+          {user?.isAdmin && (
+            <button
+              className="icon-button"
+              title="管理后台"
+              aria-label="管理后台"
+              onClick={() => navigate("admin")}
+            >
+              <Icon name="people" />
+            </button>
+          )}
           <Button variant="secondary" onClick={() => navigate("publish")}>
             <Icon name="plus" />
             发布<span className="desktop-word">视频</span>
@@ -327,7 +349,9 @@ export default function App() {
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className="app-main">
-        {!routeReady || (!ready && !["home", "watch", "profile", "tag"].includes(route.view)) || (!ready && route.view === "home" && route.sort === "following") ? (
+        {!routeReady ||
+        (!ready && !["home", "watch", "profile", "tag"].includes(route.view)) ||
+        (!ready && route.view === "home" && route.sort === "following") ? (
           <Loading />
         ) : (
           <>
@@ -339,11 +363,7 @@ export default function App() {
               />
             )}
             {route.view === "watch" && (
-              <Watch
-                key={route.id}
-                id={route.id}
-                {...props}
-              />
+              <Watch key={route.id} id={route.id} {...props} />
             )}
             {route.view === "profile" && (
               <Profile key={route.id} id={route.id} {...props} />
@@ -367,9 +387,18 @@ export default function App() {
             {route.view === "settings" && (
               <Settings refreshUser={refreshUser} {...props} />
             )}
-            {route.view === "admin" && <Admin user={user} onLogin={() => navigate("account")} refreshUser={refreshUser} notify={alert} />}
+            {route.view === "admin" && (
+              <Admin
+                user={user}
+                onLogin={() => navigate("account")}
+                refreshUser={refreshUser}
+                notify={alert}
+              />
+            )}
             {route.view === "liked" && <Collection mode="liked" {...props} />}
-            {route.view === "favorites" && <Collection mode="favorites" {...props} />}
+            {route.view === "favorites" && (
+              <Collection mode="favorites" {...props} />
+            )}
             {route.view === "tag" && (
               <Collection
                 key={route.tag}
@@ -501,7 +530,9 @@ function Home({ sort, navigate, user }: Common & { sort: Sort }) {
           {error && (
             <ErrorState
               message={error}
-              retry={() => void load(expired ? "" : items.length ? cursor : "", expired)}
+              retry={() =>
+                void load(expired ? "" : items.length ? cursor : "", expired)
+              }
             />
           )}{" "}
           {loading && !items.length ? (
@@ -592,8 +623,15 @@ function Watch({
   user,
   requireUser,
 }: Common & { id?: string }) {
-  const capabilities = useResource<{ favorites: boolean; recommendation: boolean }>("/capabilities");
-  const favoriteState = useResource<{ favorited: boolean }>(id && user && capabilities.data?.favorites ? "/videos/" + id + "/favorite" : null);
+  const capabilities = useResource<{
+    favorites: boolean;
+    recommendation: boolean;
+  }>("/capabilities");
+  const favoriteState = useResource<{ favorited: boolean }>(
+    id && user && capabilities.data?.favorites
+      ? "/videos/" + id + "/favorite"
+      : null,
+  );
   const video = useResource<Video>(id ? "/videos/" + id : null);
   const comments = useResource<Comment[]>(
     id ? "/videos/" + id + "/comments" : null,
@@ -631,7 +669,10 @@ function Watch({
       likeState.setData(result);
       video.setData((old) =>
         old
-          ? { ...old, likesCount: Math.max(0, old.likesCount + (result.liked ? 1 : -1)) }
+          ? {
+              ...old,
+              likesCount: Math.max(0, old.likesCount + (result.liked ? 1 : -1)),
+            }
           : old,
       );
     } catch (e) {
@@ -642,7 +683,14 @@ function Watch({
   };
   const comment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requireUser() || !text.trim() || sending || comments.loading || comments.error) return;
+    if (
+      !requireUser() ||
+      !text.trim() ||
+      sending ||
+      comments.loading ||
+      comments.error
+    )
+      return;
     setSending(true);
     try {
       const result = await api<Comment>("/videos/" + id + "/comments", {
@@ -735,20 +783,43 @@ function Watch({
                 <Icon name="heart" />
                 {v.likesCount} 点赞
               </Button>
-              {capabilities.data?.favorites && <Button
-                variant="secondary"
-                aria-pressed={!!favoriteState.data?.favorited}
-                disabled={busy || (!!user && (favoriteState.loading || !!favoriteState.error))}
-                onClick={async () => {
-                  if (!requireUser() || busy) return;
-                  setBusy(true);
-                  try {
-                    const result = await api<{ favorited: boolean; favoritesCount: number }>("/videos/" + id + "/favorite", { method: favoriteState.data?.favorited ? "DELETE" : "PUT" });
-                    favoriteState.setData(result);
-                    video.setData(old => old ? { ...old, favoritesCount: result.favoritesCount } : old);
-                  } catch (error) { alert(errorMessage(error)); } finally { setBusy(false); }
-                }}
-              >{favoriteState.data?.favorited ? "已收藏" : "收藏"} · {v.favoritesCount || 0}</Button>}
+              {capabilities.data?.favorites && (
+                <Button
+                  variant="secondary"
+                  aria-pressed={!!favoriteState.data?.favorited}
+                  disabled={
+                    busy ||
+                    (!!user && (favoriteState.loading || !!favoriteState.error))
+                  }
+                  onClick={async () => {
+                    if (!requireUser() || busy) return;
+                    setBusy(true);
+                    try {
+                      const result = await api<{
+                        favorited: boolean;
+                        favoritesCount: number;
+                      }>("/videos/" + id + "/favorite", {
+                        method: favoriteState.data?.favorited
+                          ? "DELETE"
+                          : "PUT",
+                      });
+                      favoriteState.setData(result);
+                      video.setData((old) =>
+                        old
+                          ? { ...old, favoritesCount: result.favoritesCount }
+                          : old,
+                      );
+                    } catch (error) {
+                      alert(errorMessage(error));
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  {favoriteState.data?.favorited ? "已收藏" : "收藏"} ·{" "}
+                  {v.favoritesCount || 0}
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 onClick={async () => {
@@ -862,7 +933,12 @@ function Watch({
               onChange={(e) => setText(e.target.value)}
               maxLength={1000}
             />
-            <Button type="submit" disabled={sending || !text.trim() || comments.loading || !!comments.error}>
+            <Button
+              type="submit"
+              disabled={
+                sending || !text.trim() || comments.loading || !!comments.error
+              }
+            >
               {sending ? "发送中…" : "发表评论"}
             </Button>
           </form>
@@ -1547,7 +1623,9 @@ function Collection({
   const videos = useResource<Video[]>(
     mode !== "tag"
       ? user
-        ? mode === "favorites" ? "/me/favorites" : "/me/likes"
+        ? mode === "favorites"
+          ? "/me/favorites"
+          : "/me/likes"
         : null
       : tag
         ? "/tags/" + encodeURIComponent(tag) + "/videos"
@@ -1557,9 +1635,19 @@ function Collection({
   return (
     <section>
       <PageHeading
-        title={mode === "favorites" ? "我的收藏" : mode === "liked" ? "我的喜欢" : "#" + (tag || "话题")}
+        title={
+          mode === "favorites"
+            ? "我的收藏"
+            : mode === "liked"
+              ? "我的喜欢"
+              : "#" + (tag || "话题")
+        }
         description={
-          mode === "favorites" ? "你收藏的视频。" : mode === "liked" ? "你点赞过的视频。" : "浏览此话题下的视频。"
+          mode === "favorites"
+            ? "你收藏的视频。"
+            : mode === "liked"
+              ? "你点赞过的视频。"
+              : "浏览此话题下的视频。"
         }
       />
       {videos.loading ? (
@@ -1573,11 +1661,19 @@ function Collection({
         />
       ) : (
         <Empty
-          title={mode === "favorites" ? "暂无收藏的视频" : mode === "liked" ? "暂无喜欢的视频" : "暂无相关视频"}
+          title={
+            mode === "favorites"
+              ? "暂无收藏的视频"
+              : mode === "liked"
+                ? "暂无喜欢的视频"
+                : "暂无相关视频"
+          }
           body={
-            mode === "favorites" ? "收藏后，视频会显示在这里。" : mode === "liked"
-              ? "点赞后，视频会显示在这里。"
-              : "此话题下还没有视频。"
+            mode === "favorites"
+              ? "收藏后，视频会显示在这里。"
+              : mode === "liked"
+                ? "点赞后，视频会显示在这里。"
+                : "此话题下还没有视频。"
           }
           action="去发现"
           onAction={() => navigate("home")}

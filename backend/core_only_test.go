@@ -24,6 +24,15 @@ func TestGCFeedIsOnlyBackend(t *testing.T) {
 	}
 }
 
+func TestRemovedLikesFeedIsRejected(t *testing.T) {
+	a := &App{core: &coreServices{}}
+	w := httptest.NewRecorder()
+	a.router().ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/videos?sort=likes", nil))
+	if w.Code != 400 || !strings.Contains(w.Body.String(), `"error":"invalid_sort"`) {
+		t.Fatalf("removed feed: %d %s", w.Code, w.Body.String())
+	}
+}
+
 func TestCoreInitializationIsolation(t *testing.T) {
 	dsn := os.Getenv("CORE_TEST_MYSQL_DSN")
 	if dsn == "" {

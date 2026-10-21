@@ -34,11 +34,6 @@ func (a *App) tagFeed(c *gin.Context) {
 	c.JSON(200, videos)
 }
 
-// Likes is an Owlet extension over GCFeed statistics; other scenes use GCFeed.
 func (a *App) feed(c *gin.Context) {
-	if c.Query("sort") == "likes" {
-		a.likesKeyset(c)
-		return
-	}
 	a.coreFeed(c)
 }

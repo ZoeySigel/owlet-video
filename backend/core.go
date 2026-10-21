@@ -171,6 +171,12 @@ func coreError(c *gin.Context, err error) {
 
 func (a *App) coreFeed(c *gin.Context) {
 	sort := c.DefaultQuery("sort", "latest")
+	switch sort {
+	case "latest", "timeline", "hot", "following", "recommend":
+	default:
+		errorJSON(c, 400, "invalid_sort")
+		return
+	}
 	scene := domainfeed.Scene(sort)
 	if sort == "latest" {
 		scene = domainfeed.SceneTimeline

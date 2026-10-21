@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -139,51 +138,6 @@ func TestSessionCacheHealingRevocationAndRename(t *testing.T) {
 	proxy.set(true)
 	if w := callAPI(a, "GET", "/api/v1/auth/me", "", fresh); w.Code != 401 {
 		t.Fatal("revoked session resurrected")
-	}
-}
-
-func TestLikesKeysetTies(t *testing.T) {
-	a := integrationApp(t)
-	v := fixtureVideos(t, a, 45)
-	cursor := ""
-	seen := map[uint]bool{}
-	ordered := []uint{}
-	for page := 0; page < 10; page++ {
-		w := callAPI(a, "GET", "/api/v1/videos?sort=likes&pagination=keyset&cursor="+cursor, "", nil)
-		if w.Code != 200 {
-			t.Fatal(w.Body.String())
-		}
-		var result struct {
-			Items      []Video
-			NextCursor string
-		}
-		if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
-			t.Fatal(err)
-		}
-		for _, row := range result.Items {
-			if seen[row.ID] {
-				t.Fatal("duplicate tie", row.ID)
-			}
-			seen[row.ID] = true
-			if row.UserID == v[0].UserID {
-				ordered = append(ordered, row.ID)
-			}
-		}
-		cursor = result.NextCursor
-		if cursor == "" {
-			break
-		}
-	}
-	if len(ordered) != len(v) {
-		t.Fatal("missing tied rows", len(ordered))
-	}
-	for i, id := range ordered {
-		if id != v[len(v)-1-i].ID {
-			t.Fatal("tie not ordered by ID")
-		}
-	}
-	if w := callAPI(a, "GET", "/api/v1/videos?sort=likes&pagination=keyset&cursor=bad", "", nil); w.Code != 400 {
-		t.Fatal("invalid keyset accepted")
 	}
 }
 

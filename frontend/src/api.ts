@@ -17,7 +17,7 @@ function publicPath(path: string): boolean {
   if (/^\/videos\/[0-9]+(?:\/comments)?$/.test(path)) return true;
   if (/^\/users\/[0-9]+(?:\/videos|\/followers|\/following)?$/.test(path)) return true;
   if (/^\/tags\/[^/?]+\/videos$/.test(path)) return true;
-  return /^\/videos\?sort=(latest|hot|likes)(?:&cursor=[^&]+)?$/.test(path);
+  return /^\/videos\?sort=(latest|hot)(?:&cursor=[^&]+)?$/.test(path);
 }
 export function clearPublicCache() {
   cacheGeneration++;
