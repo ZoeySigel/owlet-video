@@ -336,11 +336,12 @@ func (s *HotStrategy) List(ctx context.Context, req FeedRequest) (*FeedResult, e
 	limit := normalizeLimit(req.Limit)
 
 	var page *FeedPage
-	if s.cache != nil {
-		if strings.TrimSpace(req.Cursor) != "" && (parsedCursor == nil || parsedCursor.WindowEnd.IsZero()) {
-			return nil, domainfeed.ErrInvalidCursor
-		}
+	if s.cache != nil && (parsedCursor == nil || !parsedCursor.WindowEnd.IsZero()) {
 		page, err = s.listPageFromHotWindow(ctx, parsedCursor, limit)
+		// Only the first page may fall back; cursors retain their ranking source.
+		if parsedCursor == nil && (err != nil || len(page.Items) == 0) {
+			page, err = s.listPageFromRepo(ctx, nil, limit)
+		}
 	} else {
 		page, err = s.listPageFromRepo(ctx, parsedCursor, limit)
 	}
